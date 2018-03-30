@@ -163,5 +163,4 @@ SCS-1.0
 
 联系方式
 
-作者邮箱	yukunlinykl@users.sf.net
-发布主页	http://sourceforge.net/p/smartcarsim/
+作者邮箱	yukunlin@mail.ustc.edu.cn
