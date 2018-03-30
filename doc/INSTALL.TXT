@@ -8,6 +8,7 @@ Linux 下的安装方法
     下载 OpenDE http://sourceforge.net/p/opende/
     按照 OpenDE 发布包内 INSTALL 文件的要求安装
     在运行 configure 脚本时添加参数 --enable-double-precision
+    或 sudo apt-get install libode-dev
 
 3. 进入 linux 编译目录
     使当前目录处于 SCS-1.0 根目录下
