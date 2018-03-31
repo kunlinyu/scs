@@ -21,7 +21,6 @@
 
 	sVector CurrentSpeed;
 	sVector LastSpeed;
-	int RegisterFlag = 0;
 
 void sGetGraph (unsigned char graph[GRAPH_HEIGHT][GRAPH_WIDTH])
 {
@@ -207,12 +206,6 @@ double sGetSpeed ()
 void scsMainLoop (int * argc, char *argv[])
 {
 	printf(	"\n"VERSION" MainLoop\n");
-	if (RegisterFlag!=1) {
-		printf("SCS: You have not register this software.\n");
-		printf("SCS: Please read the LICENSE.TXT first.\n");
-		getchar ();
-		return ;
-	}
 	
 	if (CarReverseFlag)
 		if (CarDirection)	CarDirection = 0;
@@ -380,14 +373,4 @@ int sGetReedSwitch ()
 	if (((pos-ELineL).GetLen()+(pos-ELineR).GetLen())>sqrt(TRACK_WIDTH_OUT*TRACK_WIDTH_OUT+5.0*5.0*CONTROLTIME*CONTROLTIME))
 		return 0;
 	return 1;
-}
-
-void sRegister (const char * s)
-{
-	char s1[] = "I've read the license. And I accept it.";
-	if (strlen(s)!=strlen(s1)) return;
-	for (int i=0; i<(int)strlen(s1); i++)
-		if (s[i]!=s1[i]) return;
-	RegisterFlag = 1;
-	printf("INIT: SCS have been registered.\n");
 }

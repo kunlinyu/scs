@@ -67,7 +67,4 @@ void sEnableCustomWindow ();	// Show n(n==1) custom window to draw something
 void sSetDisplayFunc (void f(), int num);// Set call back function of display to the numth window
 void sSetDisplayFunc (void f());// Set call back function of display to the first window
 
-/*	Register Func	*/
-void sRegister (const char * s);	// To register this software
-
 #endif
