@@ -37,6 +37,8 @@ public:
 	double DirDeg();
 	double DirRad();
 	void print();
+	sVector ToCarCoo ();
+	sVector ToWorldCoo ();
 	friend sVector VMult (sVector v1, sVector v2);
 	friend double NMult (sVector v1, sVector v2);
 };
