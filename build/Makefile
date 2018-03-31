@@ -1,9 +1,9 @@
 PROJ = ai
 SCS = libscs
-SCS_SRC_DIR = ../../scs/src
-SCS_INC_DIR = ../../scs/include
-AI_SRC_DIR = ../../ai/src
-AI_INC_DIR = ../../ai/include
+SCS_SRC_DIR = ../scs/src
+SCS_INC_DIR = ../scs/include
+AI_SRC_DIR = ../ai/src
+AI_INC_DIR = ../ai/include
 VPATH = $(SCS_SRC_DIR):$(SCS_INC_DIR):$(AI_SRC_DIR):$(AI_INC_DIR)
 
 CXX = g++
@@ -21,7 +21,7 @@ $(PROJ): $(AIOBJ) $(SCS).a
 	$(CXX) -o $@ $< -L./ $(LIB)
 
 run:
-	cd ../../ai; ../build/linux/$(PROJ)
+	cd ../ai; ../build/$(PROJ)
 
 main.o: scs.h
 simulation.o: car.h track.h draw.h api.h vector.h simulation.h
