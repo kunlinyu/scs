@@ -12,7 +12,7 @@ SCSOBJ = simulation.o draw.o car.o track.o api.o vector.o ui.o
 AIOBJ = main.o
 LIB = -lscs -lode -lglut -lGLU -lm -lGL
 
-all: $(SCS).a $(PROJ) run
+all: $(SCS).a $(PROJ)
 
 $(SCS).a: $(SCSOBJ)
 	ar rcs $@ $^

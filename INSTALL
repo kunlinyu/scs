@@ -1,0 +1,11 @@
+1. DEPENDENCIES
+sudo apt-get install freeglut3-dev 
+sudo apt-get install libode-dev 
+
+2. Build
+cd build
+make
+
+3. RUN DEMO
+cd build
+make run
