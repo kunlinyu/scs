@@ -10,7 +10,7 @@
 #ifndef _SCS_H_
 #define _SCS_H_
 
-#include "vector.h"
+#include <Eigen/Eigen>
 
 #define VGA_WIDTH	640
 #define VGA_HEIGHT	480
@@ -55,10 +55,10 @@ void sEnableMiddleLine ();		// Set Middle Line
 
 
 /*	Physics Func	*/
-void sSetCamera (sVector pos);		// Set the position of camera
-void sSetCCD (sVector pos);		// Set the position of CCD
+void sSetCamera (Eigen::Vector3d pos);		// Set the position of camera
+void sSetCCD (Eigen::Vector3d pos);		// Set the position of CCD
 void sSetDepressionAngle (double depressionangle);// Set the depression angle of camera
-void sSetBatteryPosition (sVector pos);	// Set position of battery
+void sSetBatteryPosition (Eigen::Vector3d pos);	// Set position of battery
 
 
 /*	Motor Func	*/
@@ -75,9 +75,9 @@ double sGetASpeed ();			// Get average angular speed of motors
 double sGetSpeedL ();			// Get linear speed of left motor
 double sGetSpeedR ();			// Get linear speed of right motor
 double sGetSpeed ();			// Get average linear speed of motors
-sVector sGetAngularSpeed ();		// Get angular speed of chassis of car
-sVector sGetAcc ();			// Get accelerate of car
-sVector sGetMagnetic (sVector pos);	// Get the magnetic strength (vector) of the position
+Eigen::Vector3d sGetAngularSpeed ();		// Get angular speed of chassis of car
+Eigen::Vector3d sGetAcc ();			// Get accelerate of car
+Eigen::Vector3d sGetMagnetic (Eigen::Vector3d pos);	// Get the magnetic strength (vector) of the position
 int sGetReedSwitch ();			// Get the state of reed switch
 
 

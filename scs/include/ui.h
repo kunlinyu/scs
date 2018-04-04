@@ -1,13 +1,13 @@
 #ifndef _UI_H_
 #define _UI_H_
 
-#include "vector.h"
+#include <Eigen/Eigen>
 
 #define GLUT_WHEEL_UP	3
 #define GLUT_WHEEL_DOWN	4
 
 typedef struct sRoute {
-	sVector pos;
+	Eigen::Vector3d pos;
 	sRoute * next;
 	double speed;
 } * sRouteID;

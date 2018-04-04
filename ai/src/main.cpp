@@ -55,11 +55,11 @@ void AI_Electromagnetic ()
 	double speed;
 	double left ,right;
 
-	sVector pos (-0.1, 0.25, 0.05);
-	left = sGetMagnetic (pos).GetX ();
+	Eigen::Vector3d pos (-0.1, 0.25, 0.05);
+	left = sGetMagnetic (pos).x();
 
-	pos.set (0.1, 0.25, 0.05);
-	right = sGetMagnetic (pos).GetX ();
+	pos = Eigen::Vector3d(0.1, 0.25, 0.05);
+	right = sGetMagnetic (pos).x ();
 
 	dir = (int)(right - left) * 5;
 	sSetServoDir (dir);
@@ -78,13 +78,13 @@ void AI_Balance ()
 	static double s = 0.0;
 	int i,left,right,middle,dir,Threshold = 100;
 	double voltage,speed;
-	sVector AngularSpeed = sGetAngularSpeed ();
-	Angle += AngularSpeed.GetX ();
+	Eigen::Vector3d AngularSpeed = sGetAngularSpeed ();
+	Angle += AngularSpeed.x ();
 
 	speed = sGetSpeed ();
 	s += speed;
 	s -= 0.3;
-	voltage = Angle*10.0 + AngularSpeed.GetX ()*10.0 + s*-20.0 + speed*-10.0;
+	voltage = Angle*10.0 + AngularSpeed.x ()*10.0 + s*-20.0 + speed*-10.0;
 
 	sGetLine (line);
 	for (i=GRAPH_WIDTH/2; i>0; i--)

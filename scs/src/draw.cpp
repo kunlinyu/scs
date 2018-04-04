@@ -1,6 +1,8 @@
+#include <iostream>
 #include <stdio.h>
 #include <time.h>
 
+#include <Eigen/Eigen>
 #include <GL/glut.h>
 #include <ode/ode.h>
 
@@ -61,9 +63,9 @@
 	int PathFlag = 0;
 
 	double hpr[3] = {0,30,0};
-	sVector ViewPoint(-0.5,0,0.5);
+	Eigen::Vector3d ViewPoint(-0.5,0,0.5);
 
-	sVector CameraPos(0.0,0.0,0.3);
+	Eigen::Vector3d CameraPos(0.0,0.0,0.3);
 	double DepressionAngle = 30;
 
 static void DrawGround ()
@@ -84,7 +86,7 @@ static void DrawGround ()
 	}
 }
 
-static void SetViewPoint (double hpr[3], sVector ViewPoint)
+static void SetViewPoint (double hpr[3], Eigen::Vector3d ViewPoint)
 {
 	glLoadIdentity ();
 	// mult inverse matrix of camera place to current matrix
@@ -93,7 +95,7 @@ static void SetViewPoint (double hpr[3], sVector ViewPoint)
 	glRotated (hpr[0],0,1,0);
 	glRotated (-90,1,0,0);
 	glRotated ( 90,0,0,1);
-	glTranslated (-ViewPoint.GetX(),-ViewPoint.GetY(),-ViewPoint.GetZ());
+	glTranslated (-ViewPoint.x(),-ViewPoint.y(),-ViewPoint.z());
 }
 
 void ClearViewVar ()
@@ -109,9 +111,9 @@ void ClearViewVar ()
 
 static void GodView ()	// calc camera place to view car
 {
-	sVector pos(dBodyGetPosition (Chassis->body));
-	sVector lv(dBodyGetLinearVel (Chassis->body));
-	sVector dir = CarY ();
+	Eigen::Vector3d pos(dBodyGetPosition (Chassis->body));
+	Eigen::Vector3d lv(dBodyGetLinearVel (Chassis->body));
+	Eigen::Vector3d dir = CarY ();
 	static double speed = 1.0;
 
 	switch (viewtype) {
@@ -119,13 +121,13 @@ static void GodView ()	// calc camera place to view car
 			hpr[0] = TrackReverseFlag * 180.0;
 			hpr[1] = 90.0;
 			hpr[2] = 0.0;
-			ViewPoint.SetX (ViewPoint.GetX()*5.0/10.0 + pos.GetX()*5.0/10.0);
-			ViewPoint.SetY (ViewPoint.GetY()*7.0/10.0 + pos.GetY()*3.0/10.0);
-			ViewPoint.SetZ (height * distance*2.0+pos.GetZ());
+			ViewPoint.x() = ViewPoint.x()*5.0/10.0 + pos.x()*5.0/10.0;
+			ViewPoint.y() = ViewPoint.y()*7.0/10.0 + pos.y()*3.0/10.0;
+			ViewPoint.z() = height * distance * 2.0 + pos.z();
 			break;
 		case car:	// 1
-			hpr[0] = -dir.DirDeg();
-			hpr[1] = DepressionAngle - asin(dir.GetZ())*RAD_TO_DEG;
+      hpr[0] = -atan2(dir.y(), dir.x()) / M_PI * 180.0;
+			hpr[1] = DepressionAngle - asin(dir.z())*RAD_TO_DEG;
 			hpr[2] = 0.0;
 			ViewPoint = ToWorldCoo(CameraPos) + pos;
 			SetViewPoint (hpr,ViewPoint);
@@ -135,59 +137,59 @@ static void GodView ()	// calc camera place to view car
 			hpr[1] = pitch;
 			hpr[2] = 0.0;
 			speed -= 0.5;
-			speed = speed*29.0/30.0 + lv.GetLen()/30.0;
+			speed = speed*29.0/30.0 + lv.norm()/30.0;
 			speed += 0.5;
-			ViewPoint.SetX (ViewPoint.GetX()*7.0/10.0 + pos.GetX()*3.0/10.0 - cos((hpr[0])*DEG_TO_RAD)*distance*speed/5.0);
-			ViewPoint.SetY (ViewPoint.GetY()*7.0/10.0 + pos.GetY()*3.0/10.0 + sin((hpr[0])*DEG_TO_RAD)*distance*speed/5.0);
-			ViewPoint.SetZ (height * distance*speed/3.0+pos.GetZ());
+			ViewPoint.x() = ViewPoint.x()*7.0/10.0 + pos.x()*3.0/10.0 - cos((hpr[0])*DEG_TO_RAD)*distance*speed/5.0;
+			ViewPoint.y() = ViewPoint.y()*7.0/10.0 + pos.y()*3.0/10.0 + sin((hpr[0])*DEG_TO_RAD)*distance*speed/5.0;
+			ViewPoint.z() = height * distance*speed/3.0+pos.z();
 			break;
 		case birdf:	// 3
-			hpr[0] -= lv.GetX()*sin(hpr[0]*DEG_TO_RAD)*VirtualSpeed+lv.GetY()*cos(hpr[0]*DEG_TO_RAD)*VirtualSpeed;
+			hpr[0] -= lv.x()*sin(hpr[0]*DEG_TO_RAD)*VirtualSpeed+lv.y()*cos(hpr[0]*DEG_TO_RAD)*VirtualSpeed;
 			hpr[1] = pitch;
 			hpr[2] = 0.0;
 			speed -= 0.5;
-			speed = speed*29.0/30.0 + lv.GetLen()/30.0;
+			speed = speed*29.0/30.0 + lv.norm()/30.0;
 			speed += 0.5;
-			ViewPoint.SetX (ViewPoint.GetX()*7.0/10.0 + pos.GetX()*3.0/10.0 - cos((hpr[0])*DEG_TO_RAD)*distance*speed/5.0);
-			ViewPoint.SetY (ViewPoint.GetY()*7.0/10.0 + pos.GetY()*3.0/10.0 + sin((hpr[0])*DEG_TO_RAD)*distance*speed/5.0);
-			ViewPoint.SetZ (height * distance*speed/3.0+pos.GetZ());
+			ViewPoint.x() = ViewPoint.x()*7.0/10.0 + pos.x()*3.0/10.0 - cos((hpr[0])*DEG_TO_RAD)*distance*speed/5.0;
+			ViewPoint.y() = ViewPoint.y()*7.0/10.0 + pos.y()*3.0/10.0 + sin((hpr[0])*DEG_TO_RAD)*distance*speed/5.0;
+			ViewPoint.z() = height * distance*speed/3.0+pos.z();
 			break;
 		case hard:	// 4
-			hpr[0] = -dir.DirDeg();
+      hpr[0] = -atan2(dir.y(), dir.z()) / M_PI * 180.0;
 			hpr[1] = pitch;
 			hpr[2] = 0.0;
-			ViewPoint.SetX (pos.GetX() - cos((hpr[0])*DEG_TO_RAD)*distance);
-			ViewPoint.SetY (pos.GetY() + sin((hpr[0])*DEG_TO_RAD)*distance);
-			ViewPoint.SetZ (height * distance+pos.GetZ());
+			ViewPoint.x() = pos.x() - cos((hpr[0])*DEG_TO_RAD)*distance;
+			ViewPoint.y() = pos.y() + sin((hpr[0])*DEG_TO_RAD)*distance;
+			ViewPoint.z() = height * distance+pos.z();
 			break;
 		case back:	// 5
-			hpr[0] = -dir.DirDeg();
+      hpr[0] = -atan2(dir.y(), dir.z()) / M_PI * 180.0;
 			hpr[1] = pitch/2.0;
 			hpr[2] = 0.0;
-			ViewPoint.SetX (pos.GetX() - cos((hpr[0])*DEG_TO_RAD)*distance/3.0);
-			ViewPoint.SetY (pos.GetY() + sin((hpr[0])*DEG_TO_RAD)*distance/3.0);
-			ViewPoint.SetZ (height * distance/8.0+pos.GetZ());
+			ViewPoint.x() = pos.x() - cos((hpr[0])*DEG_TO_RAD)*distance/3.0;
+			ViewPoint.y() = pos.y() + sin((hpr[0])*DEG_TO_RAD)*distance/3.0;
+			ViewPoint.z() = height * distance/8.0+pos.z();
 			break;
 		case overf:	// 6
-			hpr[0] = -dir.DirDeg();
+      hpr[0] = -atan2(dir.y(), dir.z()) / M_PI * 180.0;
 			hpr[1] = 90.0;
 			hpr[2] = 0.0;
 			ViewPoint = pos;
-			ViewPoint.SetZ (height * distance*2.0+pos.GetZ());
+			ViewPoint.z() = height * distance*2.0+pos.z();
 			break;
 		case soft:	// 7
-			hpr[0] -= lv.GetX()*sin(hpr[0]*DEG_TO_RAD)*6+lv.GetY()*cos(hpr[0]*DEG_TO_RAD)*6;
+			hpr[0] -= lv.x()*sin(hpr[0]*DEG_TO_RAD)*6+lv.y()*cos(hpr[0]*DEG_TO_RAD)*6;
 			hpr[1] = pitch;
 			hpr[2] = 0.0;
-			ViewPoint.SetX (pos.GetX() - cos((hpr[0])*DEG_TO_RAD)*distance);
-			ViewPoint.SetY (pos.GetY() + sin((hpr[0])*DEG_TO_RAD)*distance);
-			ViewPoint.SetZ (height * distance+pos.GetZ());
+			ViewPoint.x() = pos.x() - cos((hpr[0])*DEG_TO_RAD)*distance;
+			ViewPoint.y() = pos.y() + sin((hpr[0])*DEG_TO_RAD)*distance;
+			ViewPoint.z() = height * distance+pos.z();
 			break;
 
 		case mouse:	// 0
 			hpr[0] = h;
 			hpr[1] = pitch;
-			ViewPoint.SetZ(height);
+			ViewPoint.z() = height;
 			SetViewPoint (hpr,ViewPoint);
 			return ;
 	}
@@ -199,12 +201,12 @@ static void GodView ()	// calc camera place to view car
 static void CarView ()	// set the place of the camera(the camera of the car, not godview camera)
 {
 	double hpr[3];  
-	sVector pos (dBodyGetPosition (Chassis->body));
-	sVector dir = CarY() ;
-	sVector ViewPoint = ToWorldCoo(CameraPos) + pos;
+	Eigen::Vector3d pos (dBodyGetPosition (Chassis->body));
+	Eigen::Vector3d dir = CarY() ;
+	Eigen::Vector3d ViewPoint = ToWorldCoo(CameraPos) + pos;
 
-	hpr[0] = -dir.DirDeg();
-	hpr[1] = DepressionAngle - asin(dir.GetZ())*RAD_TO_DEG;
+  hpr[0] = -atan2(dir.y(), dir.x()) / M_PI * 180.0;
+	hpr[1] = DepressionAngle - asin(dir.z())*RAD_TO_DEG;
 	hpr[2] = 0.0;
 
 	SetViewPoint (hpr,ViewPoint);
@@ -215,15 +217,15 @@ static void DrawRoute ()
 	int Length = 5000;
 	sRouteID p,q;
 	static sRoute car,car_old;
-	sVector posl(dBodyGetPosition (Wheel_BL->body));
-	sVector posr(dBodyGetPosition (Wheel_BR->body));
+	Eigen::Vector3d posl(dBodyGetPosition (Wheel_BL->body));
+	Eigen::Vector3d posr(dBodyGetPosition (Wheel_BR->body));
 	if (VirtualSpeed>0.0) {
 		p = head;
 		head = (sRouteID)malloc(sizeof(sRoute));
 		head->pos = (posl+posr)/2.0;
 		head->next = p;
 		if (p)
-			head->speed = (head->pos - p->pos).GetLen()/VirtualSpeed;
+			head->speed = (head->pos - p->pos).norm()/VirtualSpeed;
 	}
 	p = head;
 	int i=0;
@@ -234,7 +236,7 @@ static void DrawRoute ()
 		glColor3d (1.0-i/1000.0,1.0-i/1000.0,1.0-i/1000.0);
 		//double v = p->speed*20;
 		//glColor3d (v,v,v);
-		glVertex3d (p->pos.GetX(),p->pos.GetY(),p->pos.GetZ());
+		glVertex3d (p->pos.x(),p->pos.y(),p->pos.z());
 		p = q;
 		if (i++>Length) {
 			Free (p);
@@ -268,7 +270,7 @@ static void DrawSpeed ()
 	glEnd ();
 
 	// draw speed
-	sVector lv(dBodyGetLinearVel (Chassis->body));
+	Eigen::Vector3d lv(dBodyGetLinearVel (Chassis->body));
 
 	int temp[2];				// max line widths are different between OSes
 	glGetIntegerv(GL_LINE_WIDTH_RANGE,temp);
@@ -277,7 +279,7 @@ static void DrawSpeed ()
 
 	glBegin (GL_LINES);
 	glVertex2d (width,height);
-	glVertex2d (width,lv.GetLen()/2+height);
+	glVertex2d (width,lv.norm()/2+height);
 	glEnd ();
 
 	static double duty = 0.0;

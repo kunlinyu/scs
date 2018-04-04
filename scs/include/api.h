@@ -5,18 +5,18 @@
 
 #define VERSION	"SCS 1.0"
 
+#include <Eigen/Eigen>
 #include "draw.h"
 #include "simulation.h"
 #include "common.h"
-#include "vector.h"
 
 extern pFunc AiFunc;
 extern pFunc DisplayFunc [CUSTOMWINDOWNUM];
 extern pFunc InitFunc;
 extern char TrackName[255];
 
-extern sVector CurrentSpeed;
-extern sVector LastSpeed;
+extern Eigen::Vector3d CurrentSpeed;
+extern Eigen::Vector3d LastSpeed;
 
 /*	Initial Func	*/
 void sSetCar (CarType ct);	// Set type of car, Which can be "camera" or "electromagnetic" or "balance"
@@ -33,10 +33,10 @@ void sEnablePath (double security);// Set security which means the distance betw
 void sEnableMiddleLine ();	// Set Middle Line
 
 /*	Physics Func	*/
-void sSetCamera (sVector pos);	// Set the position of camera
-void sSetCCD (sVector pos);
+void sSetCamera (Eigen::Vector3d pos);	// Set the position of camera
+void sSetCCD (Eigen::Vector3d pos);
 void sSetDepressionAngle (double depressionangle);// Set the depression angle of camera
-void sSetBatteryPosition (sVector pos);// Set position of battery
+void sSetBatteryPosition (Eigen::Vector3d pos);// Set position of battery
 
 /*	Motor Func	*/
 void sSetMotor (int voltage);	// Set average speed of motors
@@ -52,9 +52,9 @@ double sGetASpeed ();		// Get average angular speed of motors
 double sGetSpeedL ();		// Get linear speed of left motor
 double sGetSpeedR ();		// Get linear speed of right motor
 double sGetSpeed ();		// Get average linear speed of motors
-sVector sGetAngularSpeed ();	// Get angular speed of chassis of car
-sVector sGetAcc ();		// Get accelerate of car
-sVector sGetMagnetic (sVector pos);	// Get the magnetic strength (vector) of the position
+Eigen::Vector3d sGetAngularSpeed ();	// Get angular speed of chassis of car
+Eigen::Vector3d sGetAcc ();		// Get accelerate of car
+Eigen::Vector3d sGetMagnetic (Eigen::Vector3d pos);	// Get the magnetic strength (vector) of the position
 int sGetReedSwitch ();	// Get the state of reed switch
 
 /*	Graph Func	*/

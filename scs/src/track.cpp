@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include <string.h>
 
+#include <Eigen/Eigen>
 #include <GL/glut.h>
 #include <ode/ode.h>
 
@@ -9,7 +10,6 @@
 #include "common.h"
 #include "car.h"
 #include "draw.h"
-#include "vector.h"
 
 #define TYPE_BARRIER	0x01
 #define TYPE_DASH	0x02
@@ -37,21 +37,21 @@
 
 	static double ElevationAngle = ELEVATION_ANGLE;
 
-	sVector LftOut	[MAXPOINT];
-	sVector RgtOut	[MAXPOINT];
-	sVector LftIn	[MAXPOINT];
-	sVector RgtIn	[MAXPOINT];
-	sVector SecureL	[MAXPOINT];
-	sVector SecureR	[MAXPOINT];
-	sVector Middle	[MAXPOINT];
-	sVector Path	[MAXPOINT];
+	Eigen::Vector3d LftOut	[MAXPOINT];
+	Eigen::Vector3d RgtOut	[MAXPOINT];
+	Eigen::Vector3d LftIn	[MAXPOINT];
+	Eigen::Vector3d RgtIn	[MAXPOINT];
+	Eigen::Vector3d SecureL	[MAXPOINT];
+	Eigen::Vector3d SecureR	[MAXPOINT];
+	Eigen::Vector3d Middle	[MAXPOINT];
+	Eigen::Vector3d Path	[MAXPOINT];
 	double Cur		[MAXPOINT];
 	double Limit	[MAXPOINT];
-	sVector DashLO	[MAXPOINT];
-	sVector DashLI	[MAXPOINT];
-	sVector DashRO	[MAXPOINT];
-	sVector DashRI	[MAXPOINT];
-	sVector ELineL,ELineR;
+	Eigen::Vector3d DashLO	[MAXPOINT];
+	Eigen::Vector3d DashLI	[MAXPOINT];
+	Eigen::Vector3d DashRO	[MAXPOINT];
+	Eigen::Vector3d DashRI	[MAXPOINT];
+	Eigen::Vector3d ELineL,ELineR;
 	int PathNum = 0;
 	int DashNum = 0;
 
@@ -127,15 +127,15 @@ static void Reverse ()
 
 static void CalcPoint_OUT ()
 {
-	sVector dir(0,1,0);	// current direction
+	Eigen::Vector3d dir(0,1,0);	// current direction
 	TotalLength = 0.0;
 	if (TrackReverseFlag) {
-		LftOut[0].set(-TRACK_WIDTH_OUT/2.0,2.0,TRACK_HEIGHT);
-		RgtOut[0].set( TRACK_WIDTH_OUT/2.0,2.0,TRACK_HEIGHT);
+		LftOut[0] = Eigen::Vector3d(-TRACK_WIDTH_OUT/2.0,2.0,TRACK_HEIGHT);
+		RgtOut[0] = Eigen::Vector3d( TRACK_WIDTH_OUT/2.0,2.0,TRACK_HEIGHT);
 	}
 	else {
-		LftOut[0].set(-TRACK_WIDTH_OUT/2.0,0.0,TRACK_HEIGHT);
-		RgtOut[0].set( TRACK_WIDTH_OUT/2.0,0.0,TRACK_HEIGHT);
+		LftOut[0] = Eigen::Vector3d (-TRACK_WIDTH_OUT/2.0,0.0,TRACK_HEIGHT);
+		RgtOut[0] = Eigen::Vector3d ( TRACK_WIDTH_OUT/2.0,0.0,TRACK_HEIGHT);
 	}
 	DashLO[0] = LftOut[0];
 	DashRO[0] = RgtOut[0];
@@ -151,7 +151,7 @@ static void CalcPoint_OUT ()
 		double R = track[i*2+1]/100.0;
 		if (fabs(R) < TRACK_WIDTH_OUT/2.0) {	// straight
 			if ((type[i]&TYPE_BARRIER) >0) {	// barrier
-				sVector up(0,0,BARRIER_HEIGHT);
+				Eigen::Vector3d up(0,0,BARRIER_HEIGHT);
 				LftOut[p] = LftOut[p-1] + up + dir*BARRIER_HEIGHT;	// move up
 				RgtOut[p] = RgtOut[p-1] + up + dir*BARRIER_HEIGHT;
 				p ++;
@@ -160,15 +160,15 @@ static void CalcPoint_OUT ()
 				TotalLength += BARRIER_HEIGHT;
 			}
 			if ((type[i] & TYPE_SLOP) >0) {
-				dir.SetZ (SlopDir * atan(ElevationAngle*DEG_TO_RAD/2.0));
+				dir.z() = SlopDir * atan(ElevationAngle*DEG_TO_RAD/2.0);
 				LftOut[p] = LftOut[p-1] + TRANSITION_LENGTH * dir;
 				RgtOut[p] = RgtOut[p-1] + TRANSITION_LENGTH * dir;
 				p ++;
 				length -= 2*TRANSITION_LENGTH;
 				if (length<0.0) length = 0.0;
 				TotalLength += TRANSITION_LENGTH;
-				dir.SetZ (SlopDir * atan(ElevationAngle*DEG_TO_RAD));
-			} else	dir.SetZ (0.0);
+				dir.z() = SlopDir * atan(ElevationAngle*DEG_TO_RAD);
+			} else	dir.z() = 0.0;
 			LftOut[p] = LftOut[p-1] + length * dir;	// move forward
 			RgtOut[p] = RgtOut[p-1] + length * dir;
 			TotalLength += length;
@@ -179,20 +179,20 @@ static void CalcPoint_OUT ()
 			}
 			p ++;
 			if ((type[i]&TYPE_BARRIER) >0) {
-				sVector down(0,0,-BARRIER_HEIGHT);
+				Eigen::Vector3d down(0,0,-BARRIER_HEIGHT);
 				LftOut[p] = LftOut[p-1] + down + dir*BARRIER_HEIGHT;	// move up
 				RgtOut[p] = RgtOut[p-1] + down + dir*BARRIER_HEIGHT;
 				p ++;
 				TotalLength += BARRIER_HEIGHT;
 			}
 			if ((type[i] & TYPE_SLOP) >0) {
-				dir.SetZ (SlopDir * atan(ElevationAngle*DEG_TO_RAD/2.0));
+				dir.z() = SlopDir * atan(ElevationAngle*DEG_TO_RAD/2.0);
 				LftOut[p] = LftOut[p-1] + TRANSITION_LENGTH * dir;
 				RgtOut[p] = RgtOut[p-1] + TRANSITION_LENGTH * dir;
 				p ++;
 				TotalLength += TRANSITION_LENGTH;
 				SlopDir *= -1.0;
-			} else	dir.SetZ (0.0);
+			} else	dir.z() = 0.0;
 			if (p>=MAXPOINT) {
 				printf("\tTRACK: The Track is too long to draw.\n");
 				goto StopCalcPoint;
@@ -205,7 +205,7 @@ static void CalcPoint_OUT ()
 			double LenR = (fabs(R)+TRACK_WIDTH_OUT/2.0)*sin(StepDegree/2.0)*2.0;
 
 			if ((type[i]&TYPE_BARRIER) >0) {	// barrier
-				sVector up(0,0,BARRIER_HEIGHT);
+				Eigen::Vector3d up(0,0,BARRIER_HEIGHT);
 				LftOut[p] = LftOut[p-1] + up;	// move down
 				RgtOut[p] = RgtOut[p-1] + up;
 				p ++;
@@ -219,10 +219,13 @@ static void CalcPoint_OUT ()
 				R = -R;
 			}
 			for (int j=0; j<StepNum; j++) {	// calc each step
-				dir.RotateZ (StepDegree/2.0);	// turn the first half
+        Eigen::AngleAxis<double> rot(StepDegree / 2.0, Eigen::Vector3d::UnitZ());
+        // turn the first half
+        dir = rot * dir;
 				LftOut[p] = LftOut[p-1] + LenL * dir;	// move forward
 				RgtOut[p] = RgtOut[p-1] + LenR * dir;
-				dir.RotateZ (StepDegree/2.0);	// turn the last half
+        // turn the last half
+        dir = rot * dir;
 				TotalLength += fabs(StepDegree*R);
 				if ((type[i]&TYPE_DASH)>0) {
 					DashLO[dp] = LftOut[p];
@@ -236,7 +239,7 @@ static void CalcPoint_OUT ()
 				}
 			}
 			if ((type[i]&TYPE_BARRIER) >0) {
-				sVector down(0,0,-BARRIER_HEIGHT);
+				Eigen::Vector3d down(0,0,-BARRIER_HEIGHT);
 				LftOut[p] = LftOut[p-1] + down;	// move up
 				RgtOut[p] = RgtOut[p-1] + down;
 				p ++;
@@ -249,14 +252,15 @@ static void CalcPoint_OUT ()
 	}
 StopCalcPoint :
 	// try to connect tobe a circle
-	if (	LftOut[p-1].GetX()<0 && RgtOut[p-1].GetX()>0 &&	// position limit
-		LftOut[p-1].GetY()<LftOut[0].GetY() && RgtOut[p-1].GetY()<RgtOut[0].GetY() &&
-		Distance (LftOut[p-1],LftOut[0])<0.3 && Distance (RgtOut[p-1],RgtOut[0])<0.3 &&	// distance limit
-		fabs(LftOut[p-1].GetX()-RgtOut[p-1].GetX())>0.9*TRACK_WIDTH_OUT)	// direction limit
+	if (	LftOut[p-1].x()<0 && RgtOut[p-1].x()>0 &&	// position limit
+		LftOut[p-1].y()<LftOut[0].y() && RgtOut[p-1].y()<RgtOut[0].y() &&
+		(LftOut[p-1] - LftOut[0]).norm() < 0.3 &&
+    (RgtOut[p-1] - RgtOut[0]).norm() < 0.3 &&  // distance limit
+		fabs(LftOut[p-1].x()-RgtOut[p-1].x())>0.9*TRACK_WIDTH_OUT)	// direction limit
 	{
 		LftOut[p] = LftOut[0];
 		RgtOut[p] = RgtOut[0];
-		TotalLength += (LftOut[p]-LftOut[p-1]+RgtOut[p]-RgtOut[p-1]).GetLen()/2.0;
+		TotalLength += (LftOut[p]-LftOut[p-1]+RgtOut[p]-RgtOut[p-1]).norm()/2.0;
 		p ++;
 		printf ("\tTRACK: Connect to be a circle automatically!\n");
 	} else	printf ("\tTRACK: Can not connect to be a circle!\n");
@@ -285,20 +289,20 @@ static void InsertDash ()
 static void CalcDash_IN ()
 {
 	for (int i=0; i<DashNum; i++) {
-		sVector v = DashRO[i] - DashLO[i];
-		v.Normalize ();
+		Eigen::Vector3d v = DashRO[i] - DashLO[i];
+		v.normalize ();
 		DashLI[i] = DashLO[i] + v * LINE_WIDTH*1.1;
 		DashRI[i] = DashRO[i] - v * LINE_WIDTH*1.1;
 	}
 	for (int i=0; i<DashNum; i++) {
-		sVector v = DashRO[i] - DashLO[i];
-		v.Normalize ();
+		Eigen::Vector3d v = DashRO[i] - DashLO[i];
+		v.normalize ();
 		DashLO[i] -= v * 0.001;
 		DashRO[i] += v * 0.001;
 	}
 }
 
-static void save (sVector v1, sVector v2, sVector v3)
+static void save (Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d v3)
 {
 	static int first = 1;
 	static int i = 0;
@@ -313,17 +317,17 @@ static void save (sVector v1, sVector v2, sVector v3)
 		first = 0;
 		vertices = (double*)malloc(PointNum*6*3*3*sizeof(double));	// 6 points(2 triangle), 3 dimension, 3 surface
 	}
-	vertices[i++] = v1.GetX();
-	vertices[i++] = v1.GetY();
-	vertices[i++] = v1.GetZ();
+	vertices[i++] = v1.x();
+	vertices[i++] = v1.y();
+	vertices[i++] = v1.z();
 
-	vertices[i++] = v2.GetX();
-	vertices[i++] = v2.GetY();
-	vertices[i++] = v2.GetZ();
+	vertices[i++] = v2.x();
+	vertices[i++] = v2.y();
+	vertices[i++] = v2.z();
 
-	vertices[i++] = v3.GetX();
-	vertices[i++] = v3.GetY();
-	vertices[i++] = v3.GetZ();
+	vertices[i++] = v3.x();
+	vertices[i++] = v3.y();
+	vertices[i++] = v3.z();
 
 	TriNum += 3;
 	if (i>PointNum*6*3*3) {
@@ -343,19 +347,19 @@ static void CalcMesh ()
 	}
 
 	for (int i=0; i<PointNum-1; i++) {
-		sVector L0 = ProjectionXY (LftOut[i]);
-		sVector L1 = ProjectionXY (LftOut[i+1]);	// do not create profile if it is not very high
-		if (LftOut[i].GetZ()>2*TRACK_HEIGHT+0.001 || LftOut[i+1].GetZ()>2*TRACK_HEIGHT+0.001)
+		Eigen::Vector3d L0 = Eigen::Vector3d(LftOut[i+0].x(), LftOut[i+0].y(), 0.0);
+		Eigen::Vector3d L1 = Eigen::Vector3d(LftOut[i+1].x(), LftOut[i+1].y(), 0.0);	// do not create profile if it is not very high
+		if (LftOut[i].z()>2*TRACK_HEIGHT+0.001 || LftOut[i+1].z()>2*TRACK_HEIGHT+0.001)
 			save (LftOut[i],LftOut[i+1],L1);
-		if (LftOut[i].GetZ()>2*TRACK_HEIGHT+0.001)
+		if (LftOut[i].z()>2*TRACK_HEIGHT+0.001)
 			save (L1,L0,LftOut[i]);
 	}
 	for (int i=0; i<PointNum-1; i++) {
-		sVector R0 = ProjectionXY (RgtOut[i]);
-		sVector R1 = ProjectionXY (RgtOut[i+1]);
-		if (RgtOut[i].GetZ()>2*TRACK_HEIGHT+0.001)
+		Eigen::Vector3d R0 = Eigen::Vector3d(RgtOut[i+0].x(), RgtOut[i+0].y(), 0.0);
+		Eigen::Vector3d R1 = Eigen::Vector3d(RgtOut[i+1].y(), RgtOut[i+1].y(), 0.0);
+		if (RgtOut[i].z()>2*TRACK_HEIGHT+0.001)
 			save (RgtOut[i],R0,R1);
-		if (RgtOut[i].GetZ()>2*TRACK_HEIGHT+0.001 || RgtOut[i+1].GetZ()>2*TRACK_HEIGHT+0.001)
+		if (RgtOut[i].z()>2*TRACK_HEIGHT+0.001 || RgtOut[i+1].z()>2*TRACK_HEIGHT+0.001)
 			save (R1,RgtOut[i+1],RgtOut[i]);
 	}
 
@@ -389,8 +393,8 @@ static void MakeMesh (dSpaceID space)
 static void CalcPoint_IN ()
 {
 	for (int i=0; i<PointNum; i++) {
-		sVector v = RgtOut[i] - LftOut[i];
-		v.Normalize ();
+		Eigen::Vector3d v = RgtOut[i] - LftOut[i];
+		v.normalize ();
 		LftIn[i] = LftOut[i] + v * LINE_WIDTH;
 		RgtIn[i] = RgtOut[i] - v * LINE_WIDTH;
 	}
@@ -409,13 +413,13 @@ static void CalcSecure ()
 		SecureL[j] = LftOut[i];
 		SecureR[j] = RgtOut[i];
 
-		sVector v1 = LftOut[i] - RgtOut[i];
-		sVector v2 = LftOut[i+1] - RgtOut[i+1];
+		Eigen::Vector3d v1 = LftOut[i] - RgtOut[i];
+		Eigen::Vector3d v2 = LftOut[i+1] - RgtOut[i+1];
 		if (v1!=v2) continue;
-		double distance = Distance (LftOut[i],LftOut[i+1]);
+		double distance = (LftOut[i] - LftOut[i+1]).norm();
 		int StepNum = (int)(distance/TRACK_STEP);
-		sVector dir = LftOut[i+1] - LftOut[i];
-		dir.Normalize ();
+		Eigen::Vector3d dir = LftOut[i+1] - LftOut[i];
+		dir.normalize ();
 		for (int k=0; k<StepNum; k++,j++) {
 			SecureL[j+1] = SecureL[j] + dir * distance/(StepNum+1.0);
 			SecureR[j+1] = SecureR[j] + dir * distance/(StepNum+1.0);
@@ -432,8 +436,8 @@ static void CalcSecure ()
 		printf ("PATH: The security of path is too low.\n");
 	}
 	for (int i=0; i<PathNum; i++) {
-		sVector v = SecureR[i] - SecureL[i];
-		v.Normalize ();
+		Eigen::Vector3d v = SecureR[i] - SecureL[i];
+		v.normalize ();
 		SecureL[i] += v * (PathSecurity+CarWidth/2.0);
 		SecureR[i] -= v * (PathSecurity+CarWidth/2.0);
 	}
@@ -476,11 +480,12 @@ static void DrawEndLine ()
 	while (len>TotalLength) len -= TotalLength;
 
 	for (int i=1; i<PointNum; i++) {
-		sVector p = (LftOut[i-1]+RgtOut[i-1]) / 2.0;
-		sVector n = (LftOut[i  ]+RgtOut[i  ]) / 2.0;
-		len -= (n-p).GetLen();
+		Eigen::Vector3d p = (LftOut[i-1]+RgtOut[i-1]) / 2.0;
+		Eigen::Vector3d n = (LftOut[i  ]+RgtOut[i  ]) / 2.0;
+		len -= (n-p).norm();
 		if (len<0.0) {
-			sVector dir = (RgtOut[i]-LftOut[i]).RotateZ(M_PI_2).Normalize();
+      Eigen::AngleAxis<double> rot(M_PI_2, Eigen::Vector3d::UnitZ());
+			Eigen::Vector3d dir = (rot * (RgtOut[i] - LftOut[i])).normalized();
 			ELineL = LftOut[i] + dir*len;
 			ELineR = RgtOut[i] + dir*len;
 			break;
@@ -489,13 +494,13 @@ static void DrawEndLine ()
 		
 	glColor3f (0.0f,0.0f,0.0f);
 	glPushMatrix ();
-	if (WinID==WinGod)	epsilon = ViewPoint.GetZ()/500.0;
+	if (WinID==WinGod)	epsilon = ViewPoint.z()/500.0;
 	else				epsilon = 0.001;
-	glTranslated(ELineL.GetX(),ELineL.GetY(),ELineL.GetZ()+epsilon);
+	glTranslated(ELineL.x(),ELineL.y(),ELineL.z()+epsilon);
 	epsilon = 0.001;
-	sVector v = ELineR - ELineL;
-	double theta = atan(v.GetY()/v.GetX());
-	if (v.GetX()<0)	if (v.GetY()>0)	theta += M_PI;
+	Eigen::Vector3d v = ELineR - ELineL;
+	double theta = atan(v.y()/v.x());
+	if (v.x()<0)	if (v.y()>0)	theta += M_PI;
 			else		theta -= M_PI;
 	glRotated (theta*RAD_TO_DEG,0,0,1);
 	glRectd (TRACK_WIDTH_OUT/8.0,0,TRACK_WIDTH_OUT*3.0/8.0,LINE_WIDTH);
@@ -508,9 +513,9 @@ void DrawMiddleLine ()
 	glColor3f (0,0,0);
 	glLineWidth (1);
 	glBegin (GL_LINES);
-	epsilon = ViewPoint.GetZ()/500.0;
+	epsilon = ViewPoint.z()/500.0;
 	for (int i=0; i<PathNum; i++)
-		glVertex3d (Middle[i].GetX(),Middle[i].GetY(),Middle[i].GetZ()+epsilon);
+		glVertex3d (Middle[i].x(),Middle[i].y(),Middle[i].z()+epsilon);
 	epsilon = 0.001;
 	glEnd ();
 }
@@ -522,26 +527,26 @@ void DrawTrack ()
 	glColor3f (0.6f,0.6f,0.6f);
 	glBegin (GL_QUAD_STRIP);
 	for (int i=0; i<PointNum; i++) {				// left profile
-		if (LftOut[i].GetZ()<0.02) {
+		if (LftOut[i].z()<0.02) {
 			glEnd();
 			glBegin (GL_QUAD_STRIP);
 			continue;
 		}
-		glVertex3d (LftOut[i].GetX(),LftOut[i].GetY(),LftOut[i].GetZ()-epsilon);
-		glVertex3d (LftOut[i].GetX(),LftOut[i].GetY(),0);
+		glVertex3d (LftOut[i].x(),LftOut[i].y(),LftOut[i].z()-epsilon);
+		glVertex3d (LftOut[i].x(),LftOut[i].y(),0);
 	}
 	glEnd ();
 
 	glColor3f (0.6f,0.6f,0.6f);
 	glBegin (GL_QUAD_STRIP);
 	for (int i=0; i<PointNum; i++) {				// right profile
-		if (RgtOut[i].GetZ()<0.02) {
+		if (RgtOut[i].z()<0.02) {
 			glEnd();
 			glBegin (GL_QUAD_STRIP);
 			continue;
 		}
-		glVertex3d (RgtOut[i].GetX(),RgtOut[i].GetY(),RgtOut[i].GetZ()-epsilon);
-		glVertex3d (RgtOut[i].GetX(),RgtOut[i].GetY(),0);
+		glVertex3d (RgtOut[i].x(),RgtOut[i].y(),RgtOut[i].z()-epsilon);
+		glVertex3d (RgtOut[i].x(),RgtOut[i].y(),0);
 	}
 	glEnd ();
 
@@ -549,8 +554,8 @@ void DrawTrack ()
 	glBegin (GL_QUAD_STRIP);
 	epsilon = 0.001;
 	for (int i=0; i<PointNum; i++) {				// border
-		glVertex3d (LftOut[i].GetX(),LftOut[i].GetY(),LftOut[i].GetZ()-epsilon);
-		glVertex3d (RgtOut[i].GetX(),RgtOut[i].GetY(),RgtOut[i].GetZ()-epsilon);
+		glVertex3d (LftOut[i].x(),LftOut[i].y(),LftOut[i].z()-epsilon);
+		glVertex3d (RgtOut[i].x(),RgtOut[i].y(),RgtOut[i].z()-epsilon);
 	}
 	glEnd ();
 
@@ -561,7 +566,7 @@ glPolygonOffset(-1.0f, -1.0f);
 	double len = 0.05;
 	for (int i=0; i<DashNum; i++) {					// dash left
 		double dlen;
-		if (i>0) dlen = (DashLI[i] - DashLI[i-1]).GetLen ();
+		if (i>0) dlen = (DashLI[i] - DashLI[i-1]).norm ();
 		else	dlen = 0.0;
 		len += dlen;
 		if (dlen>TRACK_STEP/5) {
@@ -571,8 +576,8 @@ glPolygonOffset(-1.0f, -1.0f);
 		}
 		if (((int)(len/0.1))%2)	glColor3d (0.66,0.66,0.66);
 		else			glColor3d (0.0,0.0,0.0);
-		glVertex3d (DashLO[i].GetX(),DashLO[i].GetY(),DashLO[i].GetZ()-epsilon);
-		glVertex3d (DashLI[i].GetX(),DashLI[i].GetY(),DashLI[i].GetZ());
+		glVertex3d (DashLO[i].x(),DashLO[i].y(),DashLO[i].z()-epsilon);
+		glVertex3d (DashLI[i].x(),DashLI[i].y(),DashLI[i].z());
 	}
 	glEnd ();
 
@@ -582,7 +587,7 @@ glPolygonOffset(-1.0f, -1.0f);
 	len = 0.05;
 	for (int i=0; i<DashNum; i++) {					// dash right
 		double dlen;
-		if (i>0) dlen = (DashRI[i] - DashRI[i-1]).GetLen ();
+		if (i>0) dlen = (DashRI[i] - DashRI[i-1]).norm ();
 		else	dlen = 0.0;
 		len += dlen;
 		if (dlen>TRACK_STEP/5) {
@@ -592,23 +597,23 @@ glPolygonOffset(-1.0f, -1.0f);
 		}
 		if (((int)(len/0.1))%2)	glColor3d (0.66,0.66,0.66);
 		else			glColor3d (0.0,0.0,0.0);
-		glVertex3d (DashRO[i].GetX(),DashRO[i].GetY(),DashRO[i].GetZ()-epsilon);
-		glVertex3d (DashRI[i].GetX(),DashRI[i].GetY(),DashRI[i].GetZ());
+		glVertex3d (DashRO[i].x(),DashRO[i].y(),DashRO[i].z()-epsilon);
+		glVertex3d (DashRI[i].x(),DashRI[i].y(),DashRI[i].z());
 	}
 	glEnd ();
 glDisable(GL_POLYGON_OFFSET_FILL);
 
 	glColor3f (0.66f,0.66f,0.66f);
 	glBegin (GL_QUAD_STRIP);
-	if (WinID==WinGod)	epsilon = ViewPoint.GetZ()/1000.0;
+	if (WinID==WinGod)	epsilon = ViewPoint.z()/1000.0;
 	else epsilon = 0.0;
 	for (int i=0; i<PointNum; i++) {				// track surface (cover the black border)
-		if (fabs(LftIn[i].GetZ() - TRACK_HEIGHT - BARRIER_HEIGHT)<0.001 && cartype == balance)
+		if (fabs(LftIn[i].z() - TRACK_HEIGHT - BARRIER_HEIGHT)<0.001 && cartype == balance)
 			glColor3f (0.0f,0.0f,0.0f);
 		else
 			glColor3f (0.66f,0.66f,0.66f);
-		glVertex3d (LftIn[i].GetX(),LftIn[i].GetY(),LftIn[i].GetZ()+epsilon);
-		glVertex3d (RgtIn[i].GetX(),RgtIn[i].GetY(),RgtIn[i].GetZ()+epsilon);
+		glVertex3d (LftIn[i].x(),LftIn[i].y(),LftIn[i].z()+epsilon);
+		glVertex3d (RgtIn[i].x(),RgtIn[i].y(),RgtIn[i].z()+epsilon);
 	}
 	epsilon = 0.001;
 	glEnd ();
@@ -616,8 +621,8 @@ glDisable(GL_POLYGON_OFFSET_FILL);
 	glColor3f (0.6f,0.6f,0.6f);
 	glBegin (GL_QUAD_STRIP);
 	for (int i=0; i<PointNum; i++) {				// track button
-		glVertex3d (LftOut[i].GetX(),LftOut[i].GetY(),0.0);
-		glVertex3d (RgtOut[i].GetX(),RgtOut[i].GetY(),0.0);
+		glVertex3d (LftOut[i].x(),LftOut[i].y(),0.0);
+		glVertex3d (RgtOut[i].x(),RgtOut[i].y(),0.0);
 	}
 	glEnd ();
 

@@ -1,8 +1,8 @@
+#include <Eigen/Eigen>
 #include <ode/ode.h>
 #include <GL/freeglut.h>
 #include "car.h"
 #include "draw.h"
-#include "vector.h"
 
 	sObjectID Chassis = NULL, Battery;
 	sObjectID Wheel_FL, Wheel_FR, Wheel_BL, Wheel_BR;
@@ -13,9 +13,9 @@
 	int CarReverseFlag = 0;
 	int CarDirection = 1;
 
-	sVector BatteryPos (0,-0.05,0.02);
-	sVector BatteryPosR(0,0.05,0.02);
-	sVector BatteryPosB(0,-0.01,-0.05);
+	Eigen::Vector3d BatteryPos (0,-0.05,0.02);
+	Eigen::Vector3d BatteryPosR(0,0.05,0.02);
+	Eigen::Vector3d BatteryPosB(0,-0.01,-0.05);
 
 	double ChassisLength	= 0.26;		// chassis length
 	double ChassisWidth	= 0.11;		// chassis width
@@ -39,8 +39,8 @@
 	double BatteryHeight	= 0.02;
 	double BatteryMass	= 0.3;
 
-	sVector	InductancePos	[INDUCTANCE_NUM];	// save every inductance's position
-	sVector Magnetic	[INDUCTANCE_NUM];	// save the magnetic of every inductance
+	Eigen::Vector3d	InductancePos	[INDUCTANCE_NUM];	// save every inductance's position
+	Eigen::Vector3d Magnetic	[INDUCTANCE_NUM];	// save the magnetic of every inductance
 	int	Ip = 0;					// inductance pointer
 
 void DestroyObject (sObjectID obj) {
@@ -87,8 +87,8 @@ void MakeCar (double x, double y, dWorldID world, dSpaceID space)
 	Battery = (sObjectID)malloc(sizeof(sObject));
 	Battery->body = dBodyCreate (world);
 	if (!CarDirection)
-		dBodySetPosition (Battery->body, x+BatteryPos .GetX(), y+BatteryPos .GetY(), STARTZ+BatteryPos .GetZ());
-	else	dBodySetPosition (Battery->body, x+BatteryPosR.GetX(), y+BatteryPosR.GetY(), STARTZ+BatteryPosR.GetZ());
+		dBodySetPosition (Battery->body, x+BatteryPos .x(), y+BatteryPos .y(), STARTZ+BatteryPos .z());
+	else	dBodySetPosition (Battery->body, x+BatteryPosR.x(), y+BatteryPosR.y(), STARTZ+BatteryPosR.z());
 	dMassSetBoxTotal (&m,BatteryMass,BatteryLength,BatteryWidth,BatteryHeight*5);
 	dBodySetMass (Battery->body,&m);
 	Battery->geom = dCreateBox (space,BatteryLength,BatteryWidth,BatteryHeight);
@@ -189,7 +189,7 @@ void MakeBalanceCar (double x, double y, dWorldID world, dSpaceID space) {
 	Battery->body = dBodyCreate (world);
 	dQFromAxisAndAngle (q,1,0,0,M_PI/2.0);
 	dBodySetQuaternion (Battery->body,q);
-	dBodySetPosition (Battery->body, x+BatteryPosB.GetX(), y+BatteryPosB.GetY(), STARTZ+BatteryPosB.GetZ()+0.1);
+	dBodySetPosition (Battery->body, x+BatteryPosB.x(), y+BatteryPosB.y(), STARTZ+BatteryPosB.z()+0.1);
 	dMassSetBoxTotal (&m,BatteryMass,BatteryLength,BatteryWidth,BatteryHeight*5);
 	dBodySetMass (Battery->body,&m);
 	Battery->geom = dCreateBox (space,BatteryLength,BatteryWidth,BatteryHeight);
@@ -239,7 +239,7 @@ void MakeBalanceCar (double x, double y, dWorldID world, dSpaceID space) {
 }
 
 // The definition of matrix between ode & opengl are diferrent.
-static void TransformMatrix (double matrix[16],sVector pos, const double R[12])
+static void TransformMatrix (double matrix[16],Eigen::Vector3d pos, const double R[12])
 {
 	matrix[0]  = R[0];
 	matrix[1]  = R[4];
@@ -253,17 +253,17 @@ static void TransformMatrix (double matrix[16],sVector pos, const double R[12])
 	matrix[9]  = R[6];
 	matrix[10] = R[10];
 	matrix[11] = 0;
-	matrix[12] = pos.GetX();
-	matrix[13] = pos.GetY();
-	matrix[14] = pos.GetZ();
+	matrix[12] = pos.x();
+	matrix[13] = pos.y();
+	matrix[14] = pos.z();
 	matrix[15] = 1;
 }
 
 static void DrawChassis ()
 {
-	static sVector pp,p,c;
-	sVector pos(dGeomGetPosition (Chassis->geom));
-	sVector speed (dBodyGetLinearVel (Chassis->body));
+	static Eigen::Vector3d pp,p,c;
+	Eigen::Vector3d pos(dGeomGetPosition (Chassis->geom));
+	Eigen::Vector3d speed (dBodyGetLinearVel (Chassis->body));
 	const double * R = dGeomGetRotation (Chassis->geom);
 	static double r=1.0,l;
 	double matrix[16];
@@ -271,7 +271,7 @@ static void DrawChassis ()
 	TransformMatrix (matrix,pos,R);
 	glPushMatrix ();
 	glMultMatrixd (matrix);
-	glTranslated (0.0,0.0,ViewPoint.GetZ()/1000.0);
+	glTranslated (0.0,0.0,ViewPoint.z()/1000.0);
 
 	glScaled (ChassisWidth,ChassisLength,ChassisHeight);
 	glColor3f (0.2f,0.2f,0.3f);
@@ -282,7 +282,7 @@ static void DrawChassis ()
 
 static void DrawBattery ()
 {
-	sVector pos(dGeomGetPosition (Battery->geom));
+	Eigen::Vector3d pos(dGeomGetPosition (Battery->geom));
 	const double * R = dGeomGetRotation (Battery->geom);
 	GLdouble matrix[16];
 
@@ -301,20 +301,23 @@ static void DrawBattery ()
 
 static void DrawWheel ()
 {
-	sVector pos;
+	Eigen::Vector3d pos;
 	const double * R;
 	double matrix[16];
-	sVector speed;
+	Eigen::Vector3d speed;
 	double l;
 
+  const double *tmp;
 #define WHEEL(WHICH)					\
-	pos.set(dGeomGetPosition(Wheel_##WHICH->geom));	\
-	speed.set(dBodyGetLinearVel(Wheel_##WHICH->body));	\
-		l = speed.GetLen ()/10.0*2.5;								\
+  tmp = dGeomGetPosition(Wheel_##WHICH->geom); \
+  pos = Eigen::Vector3d(tmp[0], tmp[1], tmp[2]); \
+  tmp = dBodyGetLinearVel(Wheel_##WHICH->body); \
+  speed = Eigen::Vector3d(tmp[0], tmp[1], tmp[2]); \
+		l = speed.norm() / 10.0 * 2.5;								\
 		R	= dGeomGetRotation(Wheel_##WHICH->geom);\
 	TransformMatrix(matrix,pos,R);			\
 	glPushMatrix();					\
-	glTranslated (0.0,0.0,ViewPoint.GetZ()/1000.0);	\
+	glTranslated (0.0,0.0,ViewPoint.z()/1000.0);	\
 	glMultMatrixd (matrix);				\
 	glTranslated (0.0f,0.0f,-WheelWidth/2.0);	\
 	glColor3d (0.4f,0.2f,0.2f);			\
@@ -339,18 +342,20 @@ glDisable(GL_POLYGON_OFFSET_FILL);			\
 
 static void DrawBalanceWheel ()
 {
-	sVector pos;
+	Eigen::Vector3d pos;
 	const double * R;
 	double matrix[16];
 
 	glColor3f (0.9f,0.2f,0.2f);
 
+  const double *tmp;
 #define WHEEL(WHICH)					\
-	pos.set(dGeomGetPosition(Wheel_##WHICH->geom));	\
+  tmp = dGeomGetPosition(Wheel_##WHICH->geom); \
+  pos = Eigen::Vector3d(tmp[0], tmp[1], tmp[2]); \
 	R	= dGeomGetRotation(Wheel_##WHICH->geom);\
 	TransformMatrix(matrix,pos,R);			\
 	glPushMatrix();					\
-	glTranslated (0.0,0.0,ViewPoint.GetZ()/1000.0);	\
+	glTranslated (0.0,0.0,ViewPoint.z()/1000.0);	\
 	glMultMatrixd (matrix);				\
 	glTranslated(0.0f,0.0f,-WheelWidth/2.0);	\
 	glColor3f (0.4f,0.2f,0.2f);			\
@@ -370,7 +375,7 @@ glDisable(GL_POLYGON_OFFSET_FILL);			\
 
 static void DrawInductance ()
 {
-	sVector pos(dGeomGetPosition (Chassis->geom));
+	Eigen::Vector3d pos(dGeomGetPosition (Chassis->geom));
 	const double * R = dGeomGetRotation (Chassis->geom);
 	double matrix[16];
 
@@ -380,14 +385,14 @@ static void DrawInductance ()
 
 	for (int i=0; i<Ip; i++) {
 		glPushMatrix ();
-		glTranslated (InductancePos[i].GetX(),InductancePos[i].GetY(),InductancePos[i].GetZ());
+		glTranslated (InductancePos[i].x(),InductancePos[i].y(),InductancePos[i].z());
 
 		glColor3f (0.9f,0.2f,0.2f);
 		glLineWidth (2);
 		Magnetic[i] /= 100.0;
 		glBegin (GL_LINES);
 		glVertex3d (0,0,0);
-		glVertex3d (Magnetic[i].GetX(),Magnetic[i].GetY(),Magnetic[i].GetZ());
+		glVertex3d (Magnetic[i].x(),Magnetic[i].y(),Magnetic[i].z());
 		glEnd ();
 
 		glColor3f (0.1f,0.1f,0.2f);
@@ -412,51 +417,51 @@ void DrawBalanceCar ()
 	DrawBalanceWheel ();
 }
 
-sVector CarX ()
+Eigen::Vector3d CarX ()
 {
-	sVector Left (dBodyGetPosition(Wheel_BL->body));
-	sVector Right(dBodyGetPosition(Wheel_BR->body));
+	Eigen::Vector3d Left (dBodyGetPosition(Wheel_BL->body));
+	Eigen::Vector3d Right(dBodyGetPosition(Wheel_BR->body));
 
-	return (Right - Left).Normalize();
+	return (Right - Left).normalized();  // TODO(yukunlin): CHECK
 }
 
-sVector CarY ()
+Eigen::Vector3d CarY ()
 {
 	if (cartype != balance) {
-		sVector PosF(dBodyGetPosition (Wheel_FL->body));
-		sVector PosB(dBodyGetPosition (Wheel_BL->body));
-		sVector dir = PosF - PosB;
-		dir.Normalize ();
+		Eigen::Vector3d PosF(dBodyGetPosition (Wheel_FL->body));
+		Eigen::Vector3d PosB(dBodyGetPosition (Wheel_BL->body));
+		Eigen::Vector3d dir = PosF - PosB;
+		dir.normalize();
 		if (CarDirection) dir *= -1;
 		return dir;
 	} else {
-		sVector PosL(dBodyGetPosition (Wheel_BL->body));
-		sVector PosR(dBodyGetPosition (Wheel_BR->body));
-		sVector PosM(dBodyGetPosition (Chassis->body));
-		sVector PosB = (PosL + PosR) / 2;
-		sVector Front = PosM - PosB;
-		sVector Y = VMult (Front,PosR-PosL);
-		Y.Normalize ();
+		Eigen::Vector3d PosL(dBodyGetPosition (Wheel_BL->body));
+		Eigen::Vector3d PosR(dBodyGetPosition (Wheel_BR->body));
+		Eigen::Vector3d PosM(dBodyGetPosition (Chassis->body));
+		Eigen::Vector3d PosB = (PosL + PosR) / 2;
+		Eigen::Vector3d Front = PosM - PosB;
+		Eigen::Vector3d Y = Front.cross(PosR-PosL);
+		Y.normalize();
 		return Y;
 	}
 }
 
-sVector CarZ ()
+Eigen::Vector3d CarZ ()
 {
-	return VMult (CarX(),CarY()).Normalize();
+	return CarX().cross(CarY()).normalized();
 }
 
-sVector ToCarCoo (sVector v)
+Eigen::Vector3d ToCarCoo (Eigen::Vector3d v)
 {
-	sVector v1;
-	v1.SetX (NMult(v,CarX()));
-	v1.SetY (NMult(v,CarY()));
-	v1.SetZ (NMult(v,CarZ()));
+	Eigen::Vector3d v1;
+	v1.x() = v.dot(CarX());
+	v1.y() = v.dot(CarY());
+	v1.z() = v.dot(CarZ());
 	return v1;
 }
 
-sVector ToWorldCoo (sVector v)
+Eigen::Vector3d ToWorldCoo (Eigen::Vector3d v)
 {
-	sVector v1 = v.GetX()*CarX() + v.GetY()*CarY() + v.GetZ()*CarZ();
+	Eigen::Vector3d v1 = v.x()*CarX() + v.y()*CarY() + v.z()*CarZ();
 	return v1;
 }

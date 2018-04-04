@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <Eigen/Eigen>
 #include <ode/ode.h>
 #include <GL/freeglut.h>
 
@@ -253,9 +254,10 @@ void motion (int x, int y)	// been call while draging mouse
 	}
 	if (RightFlag)	height -= (prey-y) / 500.0;
 	if (MiddleFlag) {
-		sVector delta(x-prex,prey-y,0);
+		Eigen::Vector3d delta(x-prex,prey-y,0);
 		delta /= 100;
-		delta.RotateZ (-hpr[0]*DEG_TO_RAD+M_PI_2);
+    Eigen::AngleAxis<double> rot(-hpr[0]*DEG_TO_RAD+M_PI_2, Eigen::Vector3d::UnitZ());
+    delta = rot * delta;
 		ViewPoint += delta;
 	}
 	prex = x;

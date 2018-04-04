@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <Eigen/Eigen>
 #include <GL/glut.h>
 #include <ode/ode.h>
 
@@ -11,7 +12,6 @@
 #include "common.h"
 #include "car.h"
 #include "api.h"
-#include "vector.h"
 #include "track.h"
 
 	pFunc AiFunc = NULL;		// AI callback function
@@ -19,8 +19,8 @@
 	void (*InitFunc)() = NULL;		// Init callback function
 	char TrackName[255] = {0};		// track file's name
 
-	sVector CurrentSpeed;
-	sVector LastSpeed;
+	Eigen::Vector3d CurrentSpeed;
+	Eigen::Vector3d LastSpeed;
 
 void sGetGraph (unsigned char graph[GRAPH_HEIGHT][GRAPH_WIDTH])
 {
@@ -174,20 +174,20 @@ void sSetDisplayFunc (void f())
 
 double sGetASpeedL ()
 {
-	sVector vl(dBodyGetAngularVel (Wheel_BL->body));
-	sVector pl(dBodyGetPosition (Wheel_BL->body));
-	sVector pr(dBodyGetPosition (Wheel_BR->body));
-	sVector v = pl - pr;
-	return NMult(vl,v) / v.GetLen () ;
+	Eigen::Vector3d vl(dBodyGetAngularVel (Wheel_BL->body));
+	Eigen::Vector3d pl(dBodyGetPosition (Wheel_BL->body));
+	Eigen::Vector3d pr(dBodyGetPosition (Wheel_BR->body));
+	Eigen::Vector3d v = pl - pr;
+	return vl.dot(v) / v.norm () ;
 }
 
 double sGetASpeedR ()
 {
-	sVector vr(dBodyGetAngularVel (Wheel_BR->body));
-	sVector pl(dBodyGetPosition (Wheel_BL->body));
-	sVector pr(dBodyGetPosition (Wheel_BR->body));
-	sVector v = pl - pr;
-	return NMult(vr,v) / v.GetLen () ;
+	Eigen::Vector3d vr(dBodyGetAngularVel (Wheel_BR->body));
+	Eigen::Vector3d pl(dBodyGetPosition (Wheel_BL->body));
+	Eigen::Vector3d pr(dBodyGetPosition (Wheel_BR->body));
+	Eigen::Vector3d v = pl - pr;
+	return vr.dot(v) / v.norm () ;
 }
 
 double sGetASpeed ()
@@ -280,18 +280,18 @@ void sEnablePath ()
 	printf("INIT: Path disabled. (security == %lf)\n",PathSecurity);
 }
 
-void sSetCamera (sVector camerapos)
+void sSetCamera (Eigen::Vector3d camerapos)
 {
 	CameraPos = camerapos;
 	printf("CAMERA: new position ");
-	CameraPos.print ();
+//	CameraPos.print ();  // TODO
 }
 
-void sSetCCD (sVector camerapos)
+void sSetCCD (Eigen::Vector3d camerapos)
 {
 	CameraPos = camerapos;
 	printf("CAMERA: new position ");
-	CameraPos.print ();
+//	CameraPos.print ();  // TODO
 }
 
 void sSetDepressionAngle (double depressionangle)
@@ -302,55 +302,56 @@ void sSetDepressionAngle (double depressionangle)
 	printf("DEPRESSION: %6.3lf\n",DepressionAngle);
 }
 
-void sSetBatteryPosition (sVector pos)
+void sSetBatteryPosition (Eigen::Vector3d pos)
 {
 	BatteryPos = pos;
 	BatteryPosR= pos;
 	BatteryPosB= pos;
 	printf("BATTERY: new position ");
-	pos.print ();
+//	pos.print ();  // TODO
 }
 
-sVector sGetAngularSpeed ()
+Eigen::Vector3d sGetAngularSpeed ()
 {
-	sVector av (dBodyGetAngularVel(Chassis->body));
+	Eigen::Vector3d av (dBodyGetAngularVel(Chassis->body));
 	return ToCarCoo (av);
 }
 
-sVector sGetAcc ()
+Eigen::Vector3d sGetAcc ()
 {
-	sVector acc = CurrentSpeed - LastSpeed;
+	Eigen::Vector3d acc = CurrentSpeed - LastSpeed;
 	acc /= CurrentStepTime;
-	acc.SetZ (acc.GetZ() + 9.8);
+	acc.z() = acc.z() + 9.8;
 	return ToCarCoo (acc);
 }
 
-sVector sGetPosition ()
+Eigen::Vector3d sGetPosition ()
 {
-	sVector pos(dBodyGetPosition (Chassis->body));
+	Eigen::Vector3d pos(dBodyGetPosition (Chassis->body));
 	return pos;
 }
 
-sVector sGetDirection ()
+Eigen::Vector3d sGetDirection ()
 {
 	return CarY ();
 }
 
-sVector sGetMagnetic (sVector pos)
+Eigen::Vector3d sGetMagnetic (Eigen::Vector3d pos)
 {
-	sVector mag;
-	sVector CarPos(dBodyGetPosition(Chassis->body));
+	Eigen::Vector3d mag;
+	Eigen::Vector3d CarPos(dBodyGetPosition(Chassis->body));
 	if (Ip >= INDUCTANCE_NUM) return mag;
 	InductancePos[Ip] = pos;
 	pos = ToWorldCoo(pos) + CarPos;
 	for (int i=0; i<PathNum-1; i++) {
-		if (Distance(Middle[i],pos)>3.0 && Distance(Middle[i+1],pos)>3.0) continue;
-		sVector r1	= pos - Middle[i];
-		sVector r2	= pos - Middle[i+1];
-		sVector l	= Middle[i+1] - Middle[i];
-		sVector dir	= VMult(l,r1).Normalize();
-		double up	= NMult(l,r1) / VMult(l,r1).GetLen() / r1.GetLen();
-		double down	= NMult(l,r2) / VMult(l,r2).GetLen() / r2.GetLen();
+		if ((Middle[i+0] - pos).norm() > 3.0 &&
+        (Middle[i+1] - pos).norm() > 3.0) continue;
+		Eigen::Vector3d r1	= pos - Middle[i];
+		Eigen::Vector3d r2	= pos - Middle[i+1];
+		Eigen::Vector3d l	= Middle[i+1] - Middle[i];
+		Eigen::Vector3d dir	= l.cross(r1).normalized();
+		double up	= l.dot(r1) / l.cross(r1).norm() / r1.norm();
+		double down	= l.dot(r2) / l.cross(r2).norm() / r2.norm();
 		mag += dir * (up - down);
 	}
 	Magnetic[Ip] = ToCarCoo (mag);
@@ -360,17 +361,17 @@ sVector sGetMagnetic (sVector pos)
 
 int sGetReedSwitch ()
 {
-	sVector pos(dBodyGetPosition(Chassis->body));
-	sVector v1 = ELineR - ELineL;	// on track
-	sVector v2 = pos - ELineL;
-	if (NMult (v1,v2) < 0) return 0;
+	Eigen::Vector3d pos(dBodyGetPosition(Chassis->body));
+	Eigen::Vector3d v1 = ELineR - ELineL;	// on track
+	Eigen::Vector3d v2 = pos - ELineL;
+	if (v1.dot(v2) < 0) return 0;
 
 	v1 *= -1;		// on track
 	v2 = pos - ELineR;
-	if (NMult (v1,v2) < 0) return 0;
+	if (v1.dot(v2) < 0) return 0;
 
 					// in oval
-	if (((pos-ELineL).GetLen()+(pos-ELineR).GetLen())>sqrt(TRACK_WIDTH_OUT*TRACK_WIDTH_OUT+5.0*5.0*CONTROLTIME*CONTROLTIME))
+	if (((pos-ELineL).norm()+(pos-ELineR).norm())>sqrt(TRACK_WIDTH_OUT*TRACK_WIDTH_OUT+5.0*5.0*CONTROLTIME*CONTROLTIME))
 		return 0;
 	return 1;
 }

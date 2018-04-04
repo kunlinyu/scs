@@ -1,8 +1,8 @@
 #ifndef _TRACK_H_
 #define _TRACK_H_
 
+#include <Eigen/Eigen>
 #include <ode/common.h>
-#include "vector.h"
 
 #define TRACK_WIDTH_OUT		0.45
 #define TRACK_WIDTH_IN		(TRACK_WIDTH_OUT-2*LINE_WIDTH)
@@ -20,15 +20,15 @@
 #define MAXPOINT		10000
 #define MAXSEGMENT		1000
 
-extern sVector Path[MAXPOINT];
+extern Eigen::Vector3d Path[MAXPOINT];
 extern int PointNum;
 extern double TotalLength;
 extern double EndLineDistance;
-extern sVector Middle[MAXPOINT];
+extern Eigen::Vector3d Middle[MAXPOINT];
 extern double PathSecurity;
-extern sVector Path[MAXPOINT];
+extern Eigen::Vector3d Path[MAXPOINT];
 extern int PathNum;
-extern sVector ELineL,ELineR;
+extern Eigen::Vector3d ELineL,ELineR;
 extern int ConnectFlag;
 extern int MiddleLineFlag;
 extern int TrackReverseFlag;

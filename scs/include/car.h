@@ -1,9 +1,9 @@
 #ifndef _CAR_H_
 #define _CAR_H_
 
+#include <Eigen/Eigen>
 #include <ode/common.h>
 #include "track.h"
-#include "vector.h"
 
 #define A_WHEEL_RADIUS		0.025	// wheel radius
 #define A_WHEEL_FRONT_WIDTH	0.025	// wheel width
@@ -28,13 +28,13 @@ extern sObjectID Wheel_FL, Wheel_FR, Wheel_BL, Wheel_BR;
 extern dJointID Joint_FL, Joint_FR, Joint_BL, Joint_BR;
 extern int CarReverseFlag;
 extern int CarDirection;
-extern sVector BatteryPos;
-extern sVector BatteryPosR;
-extern sVector BatteryPosB;
+extern Eigen::Vector3d BatteryPos;
+extern Eigen::Vector3d BatteryPosR;
+extern Eigen::Vector3d BatteryPosB;
 extern double WheelRadius;
 extern double CarWidth;
-extern sVector InductancePos [INDUCTANCE_NUM];
-extern sVector Magnetic [INDUCTANCE_NUM];
+extern Eigen::Vector3d InductancePos [INDUCTANCE_NUM];
+extern Eigen::Vector3d Magnetic [INDUCTANCE_NUM];
 extern int Ip;
 
 void MakeCar (double x, double y, dWorldID world, dSpaceID space);
@@ -44,10 +44,10 @@ void DrawCar ();
 void DrawBalanceCar ();
 void SetCar(double speed, double turn);
 void SetBalanceCar(double speedL, double speedR);
-sVector CarX ();
-sVector CarY ();
-sVector CarZ ();
-sVector ToCarCoo (sVector v);
-sVector ToWorldCoo (sVector v);
+Eigen::Vector3d CarX ();
+Eigen::Vector3d CarY ();
+Eigen::Vector3d CarZ ();
+Eigen::Vector3d ToCarCoo (Eigen::Vector3d v);
+Eigen::Vector3d ToWorldCoo (Eigen::Vector3d v);
 
 #endif

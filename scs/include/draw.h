@@ -1,7 +1,7 @@
 #ifndef _DRAW_H_
 #define _DRAW_H_
 
-#include "vector.h"
+#include <Eigen/Eigen>
 
 #define CUSTOMWINDOWNUM 16
 
@@ -35,8 +35,8 @@ extern int PathFlag;
 extern int WinCustom[CUSTOMWINDOWNUM];
 extern int WinCar;
 extern int WinGod;
-extern sVector ViewPoint;
-extern sVector CameraPos;
+extern Eigen::Vector3d ViewPoint;
+extern Eigen::Vector3d CameraPos;
 extern double DepressionAngle;
 extern ViewType viewtype;
 extern DriveMode drivemode;

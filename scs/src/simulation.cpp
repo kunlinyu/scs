@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include <Eigen/Eigen>
 #include <ode/ode.h>
 
 #include "simulation.h"
@@ -8,7 +9,6 @@
 #include "car.h"
 #include "draw.h"
 #include "api.h"
-#include "vector.h"
 #include "ui.h"
 
 #define ITERS	10
@@ -114,23 +114,23 @@ static void timer (double time)
 	double AverageSpeed;
 	static double dir = -1.0;
 	static double Time = 0.0;
-	static sVector last(0,0,-1);
+	static Eigen::Vector3d last(0,0,-1);
 	static int Round = 0;
-	sVector pos(dGeomGetPosition (Chassis->geom));
-	sVector v1 = ELineL - pos;
-	sVector v2 = ELineR - pos;
+	Eigen::Vector3d pos(dGeomGetPosition (Chassis->geom));
+	Eigen::Vector3d v1 = ELineL - pos;
+	Eigen::Vector3d v2 = ELineR - pos;
 
 	Time += time;		// at the different side of end line;
-	if (VMult (v1,v2).GetZ() * last.GetZ() > 0) return;
-	last = VMult (v1,v2);
+	if (v1.cross(v2).z() * last.z() > 0) return;
+	last = v1.cross(v2);
 	
 	v1 = ELineR - ELineL;	// on track
 	v2 = pos - ELineL;
-	if (NMult (v1,v2) < 0) return;
+	if (v1.dot(v2) < 0) return;
 
 	v1 *= -1;		// on track
 	v2 = pos - ELineR;
-	if (NMult (v1,v2) < 0) return;
+	if (v1.dot(v2) < 0) return;
 
 	if (first) {
 		first = 0;
@@ -194,7 +194,7 @@ void step (double stepsize)
 {
 	timer (stepsize);
 	LastSpeed = LastSpeed*0.0 + CurrentSpeed*1.0;
-	sVector v(dBodyGetLinearVel (Chassis->body));
+	Eigen::Vector3d v(dBodyGetLinearVel (Chassis->body));
 	CurrentSpeed = CurrentSpeed*0.9 + v*0.1;
 	CurrentStepTime = stepsize;
 
