@@ -10,6 +10,7 @@
 #include "common.h"
 #include "car.h"
 #include "draw.h"
+#include "simulation.h"
 
 #define TYPE_BARRIER	0x01
 #define TYPE_DASH	0x02
@@ -427,19 +428,19 @@ static void CalcSecure ()
 	}
 	PathNum = j;
 
-	if (PathSecurity > (TRACK_WIDTH_OUT-CarWidth)/2.0) {
-		PathSecurity = (TRACK_WIDTH_OUT-CarWidth)/2.0-0.001;
+	if (PathSecurity > (TRACK_WIDTH_OUT-car_obj.GetCarWidth())/2.0) {
+		PathSecurity = (TRACK_WIDTH_OUT-car_obj.GetCarWidth())/2.0-0.001;
 		printf ("PATH: The security of path is too high.\n");
 	}
-	if (PathSecurity < -CarWidth/2.0) {
-		PathSecurity = -CarWidth/2.0;
+	if (PathSecurity < -car_obj.GetCarWidth()/2.0) {
+		PathSecurity = -car_obj.GetCarWidth()/2.0;
 		printf ("PATH: The security of path is too low.\n");
 	}
 	for (int i=0; i<PathNum; i++) {
 		Eigen::Vector3d v = SecureR[i] - SecureL[i];
 		v.normalize ();
-		SecureL[i] += v * (PathSecurity+CarWidth/2.0);
-		SecureR[i] -= v * (PathSecurity+CarWidth/2.0);
+		SecureL[i] += v * (PathSecurity+car_obj.GetCarWidth()/2.0);
+		SecureR[i] -= v * (PathSecurity+car_obj.GetCarWidth()/2.0);
 	}
 }
 

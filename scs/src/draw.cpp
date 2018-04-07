@@ -111,9 +111,9 @@ void ClearViewVar ()
 
 static void GodView ()	// calc camera place to view car
 {
-	Eigen::Vector3d pos(dBodyGetPosition (Chassis->body));
-	Eigen::Vector3d lv(dBodyGetLinearVel (Chassis->body));
-	Eigen::Vector3d dir = CarY ();
+	Eigen::Vector3d pos(dBodyGetPosition (car_obj.GetChassis()->body));
+	Eigen::Vector3d lv(dBodyGetLinearVel (car_obj.GetChassis()->body));
+	Eigen::Vector3d dir = car_obj.CarY();
 	static double speed = 1.0;
 
 	switch (viewtype) {
@@ -129,7 +129,7 @@ static void GodView ()	// calc camera place to view car
       hpr[0] = -atan2(dir.y(), dir.x()) / M_PI * 180.0;
 			hpr[1] = DepressionAngle - asin(dir.z())*RAD_TO_DEG;
 			hpr[2] = 0.0;
-			ViewPoint = ToWorldCoo(CameraPos) + pos;
+			ViewPoint = car_obj.ToWorldCoo(CameraPos) + pos;
 			SetViewPoint (hpr,ViewPoint);
 			return ;
 		case bird:	// 2
@@ -201,9 +201,9 @@ static void GodView ()	// calc camera place to view car
 static void CarView ()	// set the place of the camera(the camera of the car, not godview camera)
 {
 	double hpr[3];  
-	Eigen::Vector3d pos (dBodyGetPosition (Chassis->body));
-	Eigen::Vector3d dir = CarY() ;
-	Eigen::Vector3d ViewPoint = ToWorldCoo(CameraPos) + pos;
+	Eigen::Vector3d pos (dBodyGetPosition (car_obj.GetChassis()->body));
+	Eigen::Vector3d dir = car_obj.CarY();
+	Eigen::Vector3d ViewPoint = car_obj.ToWorldCoo(CameraPos) + pos;
 
   hpr[0] = -atan2(dir.y(), dir.x()) / M_PI * 180.0;
 	hpr[1] = DepressionAngle - asin(dir.z())*RAD_TO_DEG;
@@ -217,8 +217,8 @@ static void DrawRoute ()
 	int Length = 5000;
 	sRouteID p,q;
 	static sRoute car,car_old;
-	Eigen::Vector3d posl(dBodyGetPosition (Wheel_BL->body));
-	Eigen::Vector3d posr(dBodyGetPosition (Wheel_BR->body));
+	Eigen::Vector3d posl(dBodyGetPosition (car_obj.GetWheelBL()->body));
+	Eigen::Vector3d posr(dBodyGetPosition (car_obj.GetWheelBR()->body));
 	if (VirtualSpeed>0.0) {
 		p = head;
 		head = (sRouteID)malloc(sizeof(sRoute));
@@ -270,7 +270,7 @@ static void DrawSpeed ()
 	glEnd ();
 
 	// draw speed
-	Eigen::Vector3d lv(dBodyGetLinearVel (Chassis->body));
+	Eigen::Vector3d lv(dBodyGetLinearVel (car_obj.GetChassis()->body));
 
 	int temp[2];				// max line widths are different between OSes
 	glGetIntegerv(GL_LINE_WIDTH_RANGE,temp);
@@ -316,7 +316,7 @@ static void DrawDirection ()
 	glLineWidth (10);
 	glBegin (GL_LINES);
 	glVertex2d (0,0);
-	glVertex2d (dir*4.0/100.0*(CarDirection?-1:1),0);
+	glVertex2d (dir*4.0/100.0*(car_obj.GetCarDirection()?-1:1),0);
 	glEnd ();
 }
 
@@ -343,9 +343,9 @@ static void DrawGodWindow ()		// main window, you can use every viewtype
 	Free (NULL);
 
 	switch (cartype) {
-		case camera:		DrawCar();		break;
-		case electromagnetic:	DrawCar();		break;
-		case balance:		DrawBalanceCar ();	break;
+		case camera:		car_obj.DrawCar();		break;
+		case electromagnetic:	car_obj.DrawCar();		break;
+		case balance:		car_obj.DrawBalanceCar ();	break;
 	}
 	glDisable (GL_DEPTH_TEST);
 	DrawSpeed ();
@@ -379,7 +379,7 @@ static void DrawCarWindow ()		// mini window, only can use car viewtype
 static void Ai ()	// call AI call back function
 {
 	static int first = 1;
-	Ip = 0;
+	car_obj.SetInductanceNumber(0);
 	if (AiFunc)	AiFunc ();
 	else if (first) {
 		printf ("AI: There is no AI function.\n");

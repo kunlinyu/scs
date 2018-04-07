@@ -109,7 +109,7 @@ void sSetMotorR (int duty)
 void sSetServoDir (int dir)
 {
 	if (drivemode==debug) return;
-	if (!CarDirection)
+	if (!car_obj.GetCarDirection())
 		ServoDir = dir;
 	else	ServoDir = -dir;
 
@@ -125,8 +125,8 @@ void sSetServoDir (int dir)
 
 void sEnableReverse ()
 {
-	if (CarReverseFlag)	CarReverseFlag = 0;
-	else			CarReverseFlag = 1;
+	if (car_obj.GetCarReverseFlag())	car_obj.SetCarReverseFlag(0);
+	else			car_obj.SetCarReverseFlag(1);
 	printf("INIT: Reverse enabled.\n");
 }
 
@@ -174,18 +174,18 @@ void sSetDisplayFunc (void f())
 
 double sGetASpeedL ()
 {
-	Eigen::Vector3d vl(dBodyGetAngularVel (Wheel_BL->body));
-	Eigen::Vector3d pl(dBodyGetPosition (Wheel_BL->body));
-	Eigen::Vector3d pr(dBodyGetPosition (Wheel_BR->body));
+	Eigen::Vector3d vl(dBodyGetAngularVel (car_obj.GetWheelBL()->body));
+	Eigen::Vector3d pl(dBodyGetPosition   (car_obj.GetWheelBL()->body));
+	Eigen::Vector3d pr(dBodyGetPosition   (car_obj.GetWheelBR()->body));
 	Eigen::Vector3d v = pl - pr;
 	return vl.dot(v) / v.norm () ;
 }
 
 double sGetASpeedR ()
 {
-	Eigen::Vector3d vr(dBodyGetAngularVel (Wheel_BR->body));
-	Eigen::Vector3d pl(dBodyGetPosition (Wheel_BL->body));
-	Eigen::Vector3d pr(dBodyGetPosition (Wheel_BR->body));
+	Eigen::Vector3d vr(dBodyGetAngularVel (car_obj.GetWheelBR()->body));
+	Eigen::Vector3d pl(dBodyGetPosition   (car_obj.GetWheelBL()->body));
+	Eigen::Vector3d pr(dBodyGetPosition   (car_obj.GetWheelBR()->body));
 	Eigen::Vector3d v = pl - pr;
 	return vr.dot(v) / v.norm () ;
 }
@@ -195,21 +195,21 @@ double sGetASpeed ()
 	return (sGetASpeedL () + sGetASpeedR ()) /2.0;
 }
 double sGetSpeedL ()
-{ return sGetASpeedL () * WheelRadius;}
+{ return sGetASpeedL () * car_obj.GetWheelRadius(); }
 
 double sGetSpeedR ()
-{ return sGetASpeedR () * WheelRadius;}
+{ return sGetASpeedR () * car_obj.GetWheelRadius(); }
 
 double sGetSpeed ()
-{ return sGetASpeed () * WheelRadius;}
+{ return sGetASpeed () * car_obj.GetWheelRadius();}
 
 void scsMainLoop (int * argc, char *argv[])
 {
 	printf(	"\n"VERSION" MainLoop\n");
 	
-	if (CarReverseFlag)
-		if (CarDirection)	CarDirection = 0;
-		else				CarDirection = 1;
+	if (car_obj.GetCarReverseFlag())
+		if (car_obj.GetCarDirection())	car_obj.SetCarDirection(false);
+		else				car_obj.SetCarDirection(true);
 	
 	dInitODE2 (0);
 	ResetSimulation ();
@@ -231,8 +231,8 @@ void sSetCar (CarType ct)
 		printf("SETCAR: car type error.\n");
 	}
 	cartype = ct;
-	if (cartype == camera)	CarDirection = 1;
-	else					CarDirection = 0;
+	if (cartype == camera)	car_obj.SetCarDirection(true);
+	else					car_obj.SetCarDirection(false);
 	if (cartype == electromagnetic)
 		MiddleLineFlag = 1;
 	printf("INIT: Car type have been set to be ");
@@ -304,17 +304,15 @@ void sSetDepressionAngle (double depressionangle)
 
 void sSetBatteryPosition (Eigen::Vector3d pos)
 {
-	BatteryPos = pos;
-	BatteryPosR= pos;
-	BatteryPosB= pos;
+  car_obj.SetBatteryPos(pos);
 	printf("BATTERY: new position ");
 //	pos.print ();  // TODO
 }
 
 Eigen::Vector3d sGetAngularSpeed ()
 {
-	Eigen::Vector3d av (dBodyGetAngularVel(Chassis->body));
-	return ToCarCoo (av);
+	Eigen::Vector3d av (dBodyGetAngularVel(car_obj.GetChassis()->body));
+	return car_obj.ToCarCoo(av);
 }
 
 Eigen::Vector3d sGetAcc ()
@@ -322,26 +320,28 @@ Eigen::Vector3d sGetAcc ()
 	Eigen::Vector3d acc = CurrentSpeed - LastSpeed;
 	acc /= CurrentStepTime;
 	acc.z() = acc.z() + 9.8;
-	return ToCarCoo (acc);
+	return car_obj.ToCarCoo(acc);
 }
 
 Eigen::Vector3d sGetPosition ()
 {
-	Eigen::Vector3d pos(dBodyGetPosition (Chassis->body));
+	Eigen::Vector3d pos(car_obj.GetPosition());
 	return pos;
 }
 
 Eigen::Vector3d sGetDirection ()
 {
-	return CarY ();
+	return car_obj.CarY();
 }
 
 Eigen::Vector3d sGetMagnetic (Eigen::Vector3d pos)
 {
 	Eigen::Vector3d mag;
-	Eigen::Vector3d CarPos(dBodyGetPosition(Chassis->body));
-	if (Ip >= INDUCTANCE_NUM) return mag;
-	InductancePos[Ip] = pos;
+	Eigen::Vector3d CarPos(car_obj.GetPosition());
+  /*
+  // TODO: inductance_number
+	if (car_obj.InductanceNumber() >= INDUCTANCE_NUM_MAX) return mag;
+	InductancePos[car_obj.InductanceNumber()] = pos;
 	pos = ToWorldCoo(pos) + CarPos;
 	for (int i=0; i<PathNum-1; i++) {
 		if ((Middle[i+0] - pos).norm() > 3.0 &&
@@ -354,14 +354,15 @@ Eigen::Vector3d sGetMagnetic (Eigen::Vector3d pos)
 		double down	= l.dot(r2) / l.cross(r2).norm() / r2.norm();
 		mag += dir * (up - down);
 	}
-	Magnetic[Ip] = ToCarCoo (mag);
-	Ip ++;
+	Magnetic[car_obj.InductanceNumber()] = ToCarCoo (mag);
+  car_obj.SetInductanceNumber(car_obj.InductanceNumber()+1);
 	return ToCarCoo (mag);
+  */
 }
 
 int sGetReedSwitch ()
 {
-	Eigen::Vector3d pos(dBodyGetPosition(Chassis->body));
+	Eigen::Vector3d pos(car_obj.GetPosition());
 	Eigen::Vector3d v1 = ELineR - ELineL;	// on track
 	Eigen::Vector3d v2 = pos - ELineL;
 	if (v1.dot(v2) < 0) return 0;

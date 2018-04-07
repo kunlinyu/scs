@@ -29,6 +29,8 @@
 	double Slip = SLIP;
 	double CurrentStepTime = 0.0;
 
+  Car car_obj;
+
 void ResetSimulation ()
 {
 	static int first = 1;
@@ -56,8 +58,8 @@ void ResetSimulation ()
 
 	switch (cartype) {
 		case camera:
-		case electromagnetic:	MakeCar (0.0, 0.0, world, space);	break;
-		case balance:		MakeBalanceCar (0.0, 0.0, world, space);break;
+		case electromagnetic:	car_obj.MakeCar (0.0, 0.0, world, space);	break;
+		case balance:		car_obj.MakeBalanceCar (0.0, 0.0, world, space);break;
 	}
 	printf("SIM: Car created!\n");
 	
@@ -116,7 +118,7 @@ static void timer (double time)
 	static double Time = 0.0;
 	static Eigen::Vector3d last(0,0,-1);
 	static int Round = 0;
-	Eigen::Vector3d pos(dGeomGetPosition (Chassis->geom));
+	Eigen::Vector3d pos(dGeomGetPosition (car_obj.GetChassis()->geom));
 	Eigen::Vector3d v1 = ELineL - pos;
 	Eigen::Vector3d v2 = ELineR - pos;
 
@@ -175,8 +177,8 @@ static void motor ()
 	double torquel = sign(Pl)*fabs(Pl/Aspeedl)+sign(Pl!=0.0?Pl:Aspeedl)-Aspeedl*0.0001-sign(Aspeedl)*0.01;
 	double torquer = sign(Pr)*fabs(Pr/Aspeedr)+sign(Pr!=0.0?Pr:Aspeedr)-Aspeedr*0.0001-sign(Aspeedr)*0.01;
 
-	dJointAddHingeTorque (Joint_BL,torquel);
-	dJointAddHingeTorque (Joint_BR,torquer);
+	dJointAddHingeTorque (car_obj.GetJointBL(),torquel);
+	dJointAddHingeTorque (car_obj.GetJointBR(),torquer);
 	
 	//dJointSetHingeParam (Joint_BL,dParamVel,AngularSpeedL);
 	//dJointSetHingeParam (Joint_BR,dParamVel,AngularSpeedR);
@@ -184,17 +186,17 @@ static void motor ()
 
 static void servo ()
 {
-	double curturn_L = dJointGetHinge2Angle1 (Joint_FL);
-	double curturn_R = dJointGetHinge2Angle1 (Joint_FR);
-	dJointSetHinge2Param (Joint_FL,dParamVel,(ServoDir/100.0*M_PI/4.0-curturn_L)*10.0+0);
-	dJointSetHinge2Param (Joint_FR,dParamVel,(ServoDir/100.0*M_PI/4.0-curturn_R)*10.0+0);
+	double curturn_L = dJointGetHinge2Angle1 (car_obj.GetJointFL());
+	double curturn_R = dJointGetHinge2Angle1 (car_obj.GetJointFR());
+	dJointSetHinge2Param (car_obj.GetJointFL(),dParamVel,(ServoDir/100.0*M_PI/4.0-curturn_L)*10.0+0);
+	dJointSetHinge2Param (car_obj.GetJointFR(),dParamVel,(ServoDir/100.0*M_PI/4.0-curturn_R)*10.0+0);
 }
 
 void step (double stepsize)
 {
 	timer (stepsize);
 	LastSpeed = LastSpeed*0.0 + CurrentSpeed*1.0;
-	Eigen::Vector3d v(dBodyGetLinearVel (Chassis->body));
+	Eigen::Vector3d v(dBodyGetLinearVel (car_obj.GetChassis()->body));
 	CurrentSpeed = CurrentSpeed*0.9 + v*0.1;
 	CurrentStepTime = stepsize;
 

@@ -4,62 +4,40 @@
 #include "car.h"
 #include "draw.h"
 
-	sObjectID Chassis = NULL, Battery;
-	sObjectID Wheel_FL, Wheel_FR, Wheel_BL, Wheel_BR;
+Car::Car() :
+	Chassis(NULL),
+	CarReverseFlag(0),
+	CarDirection(1) {
+	BatteryPos  = Eigen::Vector3d(0,-0.05,0.02);
+	BatteryPosR = Eigen::Vector3d(0,0.05,0.02);
+	BatteryPosB = Eigen::Vector3d(0,-0.01,-0.05);
 
-	// Joint between wheels and chassis
-	dJointID Joint_FL, Joint_FR, Joint_BL, Joint_BR;
+	WheelRadius	= B_WHEEL_RADIUS;
+	WheelFrontWidth	= B_WHEEL_FRONT_WIDTH;
+	WheelBackWidth	= B_WHEEL_BACK_WIDTH;
+	WheelWidth = B_WHEEL_FRONT_WIDTH;
 
-	int CarReverseFlag = 0;
-	int CarDirection = 1;
+	CarWidth = 0.11 + B_WHEEL_BACK_WIDTH;
+  inductance_number = 0;
+}
 
-	Eigen::Vector3d BatteryPos (0,-0.05,0.02);
-	Eigen::Vector3d BatteryPosR(0,0.05,0.02);
-	Eigen::Vector3d BatteryPosB(0,-0.01,-0.05);
-
-	double ChassisLength	= 0.26;		// chassis length
-	double ChassisWidth	= 0.11;		// chassis width
-	double ChassisHeight	= 0.005;	// chassis height
-	double ChassisMass	= 0.5;		// chassis mass
-
-	double WheelLR		= 0.135;	// Distance between left and right wheel
-	double WheelFront	= 0.08;		// Distance between front wheel and middle
-	double WheelBack	= 0.12;		// Distance between back wheel and middle
-	double WheelMass	= 0.03;		// wheel mass
-
-	double WheelRadius	= B_WHEEL_RADIUS;	// wheel radius
-	double WheelFrontWidth	= B_WHEEL_FRONT_WIDTH;	// wheel width
-	double WheelBackWidth	= B_WHEEL_BACK_WIDTH;
-	double WheelWidth	= B_WHEEL_FRONT_WIDTH;
-
-	double CarWidth		= 0.11 + B_WHEEL_BACK_WIDTH;
-
-	double BatteryLength	= 0.13;
-	double BatteryWidth	= 0.04;
-	double BatteryHeight	= 0.02;
-	double BatteryMass	= 0.3;
-
-	Eigen::Vector3d	InductancePos	[INDUCTANCE_NUM];	// save every inductance's position
-	Eigen::Vector3d Magnetic	[INDUCTANCE_NUM];	// save the magnetic of every inductance
-	int	Ip = 0;					// inductance pointer
-
-void DestroyObject (sObjectID obj) {
+void Car::DestroyObject (sObjectID obj) {
 	if (!obj) return;
 	dBodyDestroy (obj->body);
 	dGeomDestroy (obj->geom);
 	free (obj);
 }
 
-void DestroyCar () {
-	DestroyObject (Chassis);
-	DestroyObject (Wheel_FL);
-	DestroyObject (Wheel_FR);
-	DestroyObject (Wheel_BL);
-	DestroyObject (Wheel_BR);
-	DestroyObject (Battery);
+void Car::DestroyCar(){
+	DestroyObject(Chassis);
+	DestroyObject(Wheel_FL);
+	DestroyObject(Wheel_FR);
+	DestroyObject(Wheel_BL);
+	DestroyObject(Wheel_BR);
+	DestroyObject(Battery);
 }
 
-void MakeCar (double x, double y, dWorldID world, dSpaceID space)
+void Car::MakeCar(double x, double y, dWorldID world, dSpaceID space)
 {
 	dMass m;
 	dQuaternion q;
@@ -169,7 +147,7 @@ void MakeCar (double x, double y, dWorldID world, dSpaceID space)
 }
 
 
-void MakeBalanceCar (double x, double y, dWorldID world, dSpaceID space) {
+void Car::MakeBalanceCar (double x, double y, dWorldID world, dSpaceID space) {
 	dMass m;
 	dQuaternion q;
 
@@ -239,8 +217,7 @@ void MakeBalanceCar (double x, double y, dWorldID world, dSpaceID space) {
 }
 
 // The definition of matrix between ode & opengl are diferrent.
-static void TransformMatrix (double matrix[16],Eigen::Vector3d pos, const double R[12])
-{
+void Car::TransformMatrix (double matrix[16],Eigen::Vector3d pos, const double R[12]) {
 	matrix[0]  = R[0];
 	matrix[1]  = R[4];
 	matrix[2]  = R[8];
@@ -259,8 +236,7 @@ static void TransformMatrix (double matrix[16],Eigen::Vector3d pos, const double
 	matrix[15] = 1;
 }
 
-static void DrawChassis ()
-{
+void Car::DrawChassis () {
 	static Eigen::Vector3d pp,p,c;
 	Eigen::Vector3d pos(dGeomGetPosition (Chassis->geom));
 	Eigen::Vector3d speed (dBodyGetLinearVel (Chassis->body));
@@ -280,7 +256,7 @@ static void DrawChassis ()
 	glPopMatrix ();
 }
 
-static void DrawBattery ()
+void Car::DrawBattery ()
 {
 	Eigen::Vector3d pos(dGeomGetPosition (Battery->geom));
 	const double * R = dGeomGetRotation (Battery->geom);
@@ -299,7 +275,7 @@ static void DrawBattery ()
 }
 
 
-static void DrawWheel ()
+void Car::DrawWheel ()
 {
 	Eigen::Vector3d pos;
 	const double * R;
@@ -339,8 +315,7 @@ glDisable(GL_POLYGON_OFFSET_FILL);			\
 #undef WHEEL
 }
 
-
-static void DrawBalanceWheel ()
+void Car::DrawBalanceWheel ()
 {
 	Eigen::Vector3d pos;
 	const double * R;
@@ -373,8 +348,7 @@ glDisable(GL_POLYGON_OFFSET_FILL);			\
 #undef WHEEL
 }
 
-static void DrawInductance ()
-{
+void Car::DrawInductance() {
 	Eigen::Vector3d pos(dGeomGetPosition (Chassis->geom));
 	const double * R = dGeomGetRotation (Chassis->geom);
 	double matrix[16];
@@ -383,7 +357,7 @@ static void DrawInductance ()
 	glPushMatrix ();
 	glMultMatrixd (matrix);
 
-	for (int i=0; i<Ip; i++) {
+	for (int i = 0; i < inductance_number; i++) {
 		glPushMatrix ();
 		glTranslated (InductancePos[i].x(),InductancePos[i].y(),InductancePos[i].z());
 
@@ -402,22 +376,21 @@ static void DrawInductance ()
 	glPopMatrix ();
 }
 
-void DrawCar ()
-{
+void Car::DrawCar() {
 	DrawChassis ();
 	DrawBattery ();
 	DrawWheel ();
 	DrawInductance ();
 }
 
-void DrawBalanceCar ()
+void Car::DrawBalanceCar ()
 {
 	DrawChassis ();
 	DrawBattery ();
 	DrawBalanceWheel ();
 }
 
-Eigen::Vector3d CarX ()
+Eigen::Vector3d Car::CarX ()
 {
 	Eigen::Vector3d Left (dBodyGetPosition(Wheel_BL->body));
 	Eigen::Vector3d Right(dBodyGetPosition(Wheel_BR->body));
@@ -425,7 +398,7 @@ Eigen::Vector3d CarX ()
 	return (Right - Left).normalized();  // TODO(yukunlin): CHECK
 }
 
-Eigen::Vector3d CarY ()
+Eigen::Vector3d Car::CarY ()
 {
 	if (cartype != balance) {
 		Eigen::Vector3d PosF(dBodyGetPosition (Wheel_FL->body));
@@ -446,12 +419,12 @@ Eigen::Vector3d CarY ()
 	}
 }
 
-Eigen::Vector3d CarZ ()
+Eigen::Vector3d Car::CarZ ()
 {
 	return CarX().cross(CarY()).normalized();
 }
 
-Eigen::Vector3d ToCarCoo (Eigen::Vector3d v)
+Eigen::Vector3d Car::ToCarCoo (Eigen::Vector3d v)
 {
 	Eigen::Vector3d v1;
 	v1.x() = v.dot(CarX());
@@ -460,7 +433,7 @@ Eigen::Vector3d ToCarCoo (Eigen::Vector3d v)
 	return v1;
 }
 
-Eigen::Vector3d ToWorldCoo (Eigen::Vector3d v)
+Eigen::Vector3d Car::ToWorldCoo (Eigen::Vector3d v)
 {
 	Eigen::Vector3d v1 = v.x()*CarX() + v.y()*CarY() + v.z()*CarZ();
 	return v1;

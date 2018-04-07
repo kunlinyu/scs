@@ -4,6 +4,7 @@
 
 #include <Eigen/Eigen>
 #include <ode/common.h>
+#include "car.h"
 
 extern dWorldID	world;
 extern dSpaceID	space;
@@ -20,6 +21,7 @@ extern int ServoDir;
 extern double Mu;
 extern double Slip;
 extern double CurrentStepTime;
+extern Car car_obj;
 
 void ResetSimulation();
 void DestroySimulation();

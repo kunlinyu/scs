@@ -49,7 +49,7 @@ void Play ()	// capture input from arrow key to control the car
 		MotorDutyL = (int)(speed*(1+turn/200.0));
 		MotorDutyR = (int)speed;
 	}
-	if (!CarDirection)
+	if (!car_obj.GetCarDirection())
 			ServoDir = (int)turn;
 	else	ServoDir = -(int)turn;
 }
@@ -57,18 +57,18 @@ void Play ()	// capture input from arrow key to control the car
 void Up ()
 {
 	const double *pos;
-	pos = dBodyGetPosition (Wheel_FL->body);
-	if (pos[2]<TRACK_HEIGHT+WheelRadius-0.005)
-		dBodyAddForce (Wheel_FL->body,0,0,100.0);
-	pos = dBodyGetPosition (Wheel_FR->body);
-	if (pos[2]<TRACK_HEIGHT+WheelRadius-0.005)
-		dBodyAddForce (Wheel_FR->body,0,0,100.0);
-	pos = dBodyGetPosition (Wheel_BL->body);
-	if (pos[2]<TRACK_HEIGHT+WheelRadius-0.005)
-		dBodyAddForce (Wheel_BL->body,0,0,100.0);
-	pos = dBodyGetPosition (Wheel_BR->body);
-	if (pos[2]<TRACK_HEIGHT+WheelRadius-0.005)
-		dBodyAddForce (Wheel_BR->body,0,0,100.0);
+	pos = dBodyGetPosition (car_obj.GetWheelFL()->body);
+	if (pos[2]<TRACK_HEIGHT+car_obj.GetWheelRadius()-0.005)
+		dBodyAddForce (car_obj.GetWheelFL()->body,0,0,100.0);
+	pos = dBodyGetPosition (car_obj.GetWheelFR()->body);
+	if (pos[2]<TRACK_HEIGHT+car_obj.GetWheelRadius()-0.005)
+		dBodyAddForce (car_obj.GetWheelFR()->body,0,0,100.0);
+	pos = dBodyGetPosition (car_obj.GetWheelBL()->body);
+	if (pos[2]<TRACK_HEIGHT+car_obj.GetWheelRadius()-0.005)
+		dBodyAddForce (car_obj.GetWheelBL()->body,0,0,100.0);
+	pos = dBodyGetPosition (car_obj.GetWheelBR()->body);
+	if (pos[2]<TRACK_HEIGHT+car_obj.GetWheelRadius()-0.005)
+		dBodyAddForce (car_obj.GetWheelBR()->body,0,0,100.0);
 }
 
 void Free (sRouteID head)	// free the rest route
