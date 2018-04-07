@@ -195,7 +195,7 @@ void SpecialKeyPress (int key, int x, int y)
 
 void PrintHelp ()
 {
-	printf(	"\n"VERSION"\n");
+	printf(	"\n" VERSION "\n");
 	printf(	"KEY\tFUNCTION\n"
 		"----------------------------------------------------------------\n"
 		"F1\tshow this message\n"

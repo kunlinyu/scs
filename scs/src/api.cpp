@@ -205,7 +205,7 @@ double sGetSpeed ()
 
 void scsMainLoop (int * argc, char *argv[])
 {
-	printf(	"\n"VERSION" MainLoop\n");
+	printf(	"\n" VERSION " MainLoop\n");
 	
 	if (car_obj.GetCarReverseFlag())
 		if (car_obj.GetCarDirection())	car_obj.SetCarDirection(false);

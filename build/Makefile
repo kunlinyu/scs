@@ -7,7 +7,7 @@ AI_INC_DIR = ../ai/include
 VPATH = $(SCS_SRC_DIR):$(SCS_INC_DIR):$(AI_SRC_DIR):$(AI_INC_DIR)
 
 CXX = g++
-CXXFLAGS = -I$(SCS_INC_DIR) -I$(AI_INC_DIR) -I/usr/include/eigen3 -g -DdDOUBLE -DQVGA
+CXXFLAGS = -I$(SCS_INC_DIR) -I$(AI_INC_DIR) -I/usr/include/eigen3 -g -DdDOUBLE -DQVGA -std=c++11
 SCSOBJ = simulation.o draw.o car.o track.o api.o ui.o
 AIOBJ = main.o
 LIB = -lscs -lode -lglut -lGLU -lm -lGL
