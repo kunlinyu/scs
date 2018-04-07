@@ -21,7 +21,7 @@ Car::Car() :
   inductance_number = 0;
 }
 
-void Car::DestroyObject (sObjectID obj) {
+void Car::DestroyObject (ObjectPtr obj) {
 	if (!obj) return;
 	dBodyDestroy (obj->body);
 	dGeomDestroy (obj->geom);
@@ -53,7 +53,7 @@ void Car::MakeCar(double x, double y, dWorldID world, dSpaceID space)
 	}
 
 	// chassis body
-	Chassis = (sObjectID)malloc(sizeof(sObject));
+	Chassis = (ObjectPtr)malloc(sizeof(Object));
 	Chassis->body = dBodyCreate (world);
 	dBodySetPosition (Chassis->body,x,y,STARTZ);
 	dMassSetBoxTotal (&m,ChassisMass,ChassisWidth,ChassisLength,ChassisHeight);
@@ -62,7 +62,7 @@ void Car::MakeCar(double x, double y, dWorldID world, dSpaceID space)
 	dGeomSetBody (Chassis->geom,Chassis->body);
 
 	// Battery body
-	Battery = (sObjectID)malloc(sizeof(sObject));
+	Battery = (ObjectPtr)malloc(sizeof(Object));
 	Battery->body = dBodyCreate (world);
 	if (!CarDirection)
 		dBodySetPosition (Battery->body, x+BatteryPos .x(), y+BatteryPos .y(), STARTZ+BatteryPos .z());
@@ -79,7 +79,7 @@ void Car::MakeCar(double x, double y, dWorldID world, dSpaceID space)
 
 	// wheel bodies
 #define WHEEL(WHICH); 								\
-	Wheel_##WHICH = (sObjectID)malloc(sizeof(sObject));			\
+	Wheel_##WHICH = (ObjectPtr)malloc(sizeof(Object));			\
 	Wheel_##WHICH->body = dBodyCreate (world);				\
 	dQFromAxisAndAngle (q,0,1,0,M_PI/2.0);					\
 	dBodySetQuaternion (Wheel_##WHICH->body,q);				\
@@ -152,7 +152,7 @@ void Car::MakeBalanceCar (double x, double y, dWorldID world, dSpaceID space) {
 	dQuaternion q;
 
 	// chassis body
-	Chassis = (sObjectID)malloc(sizeof(sObject));
+	Chassis = (ObjectPtr)malloc(sizeof(Object));
 	Chassis->body = dBodyCreate (world);
 	dQFromAxisAndAngle (q,1,0,0,M_PI/2.0);
 	dBodySetQuaternion (Chassis->body,q);
@@ -163,7 +163,7 @@ void Car::MakeBalanceCar (double x, double y, dWorldID world, dSpaceID space) {
 	dGeomSetBody (Chassis->geom,Chassis->body);
 
 	// Battery body
-	Battery = (sObjectID)malloc(sizeof(sObject));
+	Battery = (ObjectPtr)malloc(sizeof(Object));
 	Battery->body = dBodyCreate (world);
 	dQFromAxisAndAngle (q,1,0,0,M_PI/2.0);
 	dBodySetQuaternion (Battery->body,q);
@@ -181,7 +181,7 @@ void Car::MakeBalanceCar (double x, double y, dWorldID world, dSpaceID space) {
 
 	// wheel bodies
 #define WHEEL(WHICH); 								\
-	Wheel_##WHICH = (sObjectID)malloc(sizeof(sObject));			\
+	Wheel_##WHICH = (ObjectPtr)malloc(sizeof(Object));			\
 	Wheel_##WHICH->body = dBodyCreate (world);				\
 	dQFromAxisAndAngle (q,0,1,0,M_PI/2.0);					\
 	dBodySetQuaternion (Wheel_##WHICH->body,q);				\
@@ -410,7 +410,7 @@ Eigen::Vector3d Car::CarY ()
 	} else {
 		Eigen::Vector3d PosL(dBodyGetPosition (Wheel_BL->body));
 		Eigen::Vector3d PosR(dBodyGetPosition (Wheel_BR->body));
-		Eigen::Vector3d PosM(dBodyGetPosition (Chassis->body));
+		Eigen::Vector3d PosM(GetPosition());
 		Eigen::Vector3d PosB = (PosL + PosR) / 2;
 		Eigen::Vector3d Front = PosM - PosB;
 		Eigen::Vector3d Y = Front.cross(PosR-PosL);

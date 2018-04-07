@@ -18,10 +18,10 @@
 #define STARTZ (TRACK_HEIGHT + 0.05)  // starting height of chassis
 #define FMAX 1.0  // car engine fmax
 
-typedef struct sObject {
+typedef struct Object {
  dBodyID body;
  dGeomID geom;
-} * sObjectID;
+} * ObjectPtr;
 
 class Car {
  public:
@@ -39,16 +39,17 @@ class Car {
   Eigen::Vector3d ToCarCoo(Eigen::Vector3d v);
   Eigen::Vector3d ToWorldCoo(Eigen::Vector3d v);
 
-  Eigen::Vector3d GetPosition() { dBodyGetPosition(Chassis->body); }
-  sObjectID GetChassis() { return Chassis; }
+  Eigen::Vector3d GetPosition() { return Eigen::Vector3d(dBodyGetPosition(Chassis->body)); }
+  Eigen::Vector3d GetAngularVel() { return Eigen::Vector3d(dBodyGetAngularVel(Chassis->body)); }
+  Eigen::Vector3d GetLinearVel() { return Eigen::Vector3d(dBodyGetLinearVel(Chassis->body)); }
   dJointID GetJointBL() { return Joint_BL; }
   dJointID GetJointBR() { return Joint_BR; }
   dJointID GetJointFL() { return Joint_FL; }
   dJointID GetJointFR() { return Joint_FR; }
-  sObjectID GetWheelBL() { return Wheel_BL; }
-  sObjectID GetWheelBR() { return Wheel_BR; }
-  sObjectID GetWheelFL() { return Wheel_FL; }
-  sObjectID GetWheelFR() { return Wheel_FR; }
+  ObjectPtr GetWheelBL() { return Wheel_BL; }
+  ObjectPtr GetWheelBR() { return Wheel_BR; }
+  ObjectPtr GetWheelFL() { return Wheel_FL; }
+  ObjectPtr GetWheelFR() { return Wheel_FR; }
   bool GetCarReverseFlag() { return CarReverseFlag; }
   void SetCarReverseFlag(double flag) { CarReverseFlag = flag; }
   bool GetCarDirection() { return CarDirection; }
@@ -70,7 +71,7 @@ class Car {
   void DrawWheel();
   void DrawBalanceWheel();
   void DrawInductance();
-  void DestroyObject (sObjectID obj);
+  void DestroyObject (ObjectPtr obj);
   void DestroyCar();
 
  private:
@@ -89,12 +90,12 @@ class Car {
   static constexpr double BatteryHeight = 0.02;
   static constexpr double BatteryMass = 0.3;
 
-  sObjectID Wheel_FL;
-  sObjectID Wheel_FR;
-  sObjectID Wheel_BL;
-  sObjectID Wheel_BR;
-  sObjectID Chassis;
-  sObjectID Battery;
+  ObjectPtr Wheel_FL;
+  ObjectPtr Wheel_FR;
+  ObjectPtr Wheel_BL;
+  ObjectPtr Wheel_BR;
+  ObjectPtr Chassis;
+  ObjectPtr Battery;
 
   // Joint between wheels and chassis
   dJointID Joint_FL;

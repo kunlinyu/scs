@@ -111,8 +111,8 @@ void ClearViewVar ()
 
 static void GodView ()	// calc camera place to view car
 {
-	Eigen::Vector3d pos(dBodyGetPosition (car_obj.GetChassis()->body));
-	Eigen::Vector3d lv(dBodyGetLinearVel (car_obj.GetChassis()->body));
+	Eigen::Vector3d pos(car_obj.GetPosition());
+	Eigen::Vector3d lv(car_obj.GetLinearVel());
 	Eigen::Vector3d dir = car_obj.CarY();
 	static double speed = 1.0;
 
@@ -201,7 +201,7 @@ static void GodView ()	// calc camera place to view car
 static void CarView ()	// set the place of the camera(the camera of the car, not godview camera)
 {
 	double hpr[3];  
-	Eigen::Vector3d pos (dBodyGetPosition (car_obj.GetChassis()->body));
+	Eigen::Vector3d pos (car_obj.GetPosition());
 	Eigen::Vector3d dir = car_obj.CarY();
 	Eigen::Vector3d ViewPoint = car_obj.ToWorldCoo(CameraPos) + pos;
 
@@ -270,7 +270,7 @@ static void DrawSpeed ()
 	glEnd ();
 
 	// draw speed
-	Eigen::Vector3d lv(dBodyGetLinearVel (car_obj.GetChassis()->body));
+	Eigen::Vector3d lv(car_obj.GetLinearVel());
 
 	int temp[2];				// max line widths are different between OSes
 	glGetIntegerv(GL_LINE_WIDTH_RANGE,temp);

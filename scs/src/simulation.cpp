@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <iostream>
 #include <time.h>
 
 #include <Eigen/Eigen>
@@ -118,7 +119,7 @@ static void timer (double time)
 	static double Time = 0.0;
 	static Eigen::Vector3d last(0,0,-1);
 	static int Round = 0;
-	Eigen::Vector3d pos(dGeomGetPosition (car_obj.GetChassis()->geom));
+	Eigen::Vector3d pos = car_obj.GetPosition();
 	Eigen::Vector3d v1 = ELineL - pos;
 	Eigen::Vector3d v2 = ELineR - pos;
 
@@ -196,7 +197,7 @@ void step (double stepsize)
 {
 	timer (stepsize);
 	LastSpeed = LastSpeed*0.0 + CurrentSpeed*1.0;
-	Eigen::Vector3d v(dBodyGetLinearVel (car_obj.GetChassis()->body));
+	Eigen::Vector3d v(car_obj.GetLinearVel());
 	CurrentSpeed = CurrentSpeed*0.9 + v*0.1;
 	CurrentStepTime = stepsize;
 

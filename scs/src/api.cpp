@@ -311,7 +311,7 @@ void sSetBatteryPosition (Eigen::Vector3d pos)
 
 Eigen::Vector3d sGetAngularSpeed ()
 {
-	Eigen::Vector3d av (dBodyGetAngularVel(car_obj.GetChassis()->body));
+	Eigen::Vector3d av (car_obj.GetAngularVel());
 	return car_obj.ToCarCoo(av);
 }
 
