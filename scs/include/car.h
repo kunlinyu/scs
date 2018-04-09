@@ -52,14 +52,6 @@ class Car {
   Eigen::Vector3d GetPosition() { return Eigen::Vector3d(dBodyGetPosition(Chassis->body)); }
   Eigen::Vector3d GetAngularVel() { return Eigen::Vector3d(dBodyGetAngularVel(Chassis->body)); }
   Eigen::Vector3d GetLinearVel() { return Eigen::Vector3d(dBodyGetLinearVel(Chassis->body)); }
-  dJointID GetJointBL() { return Joint_BL; }
-  dJointID GetJointBR() { return Joint_BR; }
-  dJointID GetJointFL() { return Joint_FL; }
-  dJointID GetJointFR() { return Joint_FR; }
-  ObjectPtr GetWheelBL() { return Wheel_BL; }
-  ObjectPtr GetWheelBR() { return Wheel_BR; }
-  ObjectPtr GetWheelFL() { return Wheel_FL; }
-  ObjectPtr GetWheelFR() { return Wheel_FR; }
   bool GetCarReverseFlag() { return CarReverseFlag; }
   void SetCarReverseFlag(double flag) { CarReverseFlag = flag; }
   bool GetCarDirection() { return CarDirection; }

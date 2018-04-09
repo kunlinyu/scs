@@ -54,23 +54,6 @@ void Play ()	// capture input from arrow key to control the car
 	else	ServoDir = -(int)turn;
 }
 
-void Up ()
-{
-	const double *pos;
-	pos = dBodyGetPosition (car_obj.GetWheelFL()->body);
-	if (pos[2]<TRACK_HEIGHT+car_obj.GetWheelRadius()-0.005)
-		dBodyAddForce (car_obj.GetWheelFL()->body,0,0,100.0);
-	pos = dBodyGetPosition (car_obj.GetWheelFR()->body);
-	if (pos[2]<TRACK_HEIGHT+car_obj.GetWheelRadius()-0.005)
-		dBodyAddForce (car_obj.GetWheelFR()->body,0,0,100.0);
-	pos = dBodyGetPosition (car_obj.GetWheelBL()->body);
-	if (pos[2]<TRACK_HEIGHT+car_obj.GetWheelRadius()-0.005)
-		dBodyAddForce (car_obj.GetWheelBL()->body,0,0,100.0);
-	pos = dBodyGetPosition (car_obj.GetWheelBR()->body);
-	if (pos[2]<TRACK_HEIGHT+car_obj.GetWheelRadius()-0.005)
-		dBodyAddForce (car_obj.GetWheelBR()->body,0,0,100.0);
-}
-
 void Free (sRouteID head)	// free the rest route
 {
 	static sRouteID p = NULL, q;
@@ -172,8 +155,6 @@ void Key (unsigned char cmd, int x, int y)
 
 		case 'V':	ClearViewVar ();
 				printf("VIEW: View var returned.\n");		break;
-		case 'U':	Up ();
-				printf("Up: Up!\n");				break;
 		case ESCAPE:	glutDestroyWindow (WinGod);
 				glutDestroyWindow (WinCar);
 				DestroySimulation ();

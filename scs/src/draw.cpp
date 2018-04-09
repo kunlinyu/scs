@@ -41,8 +41,6 @@
 	// window handle
 	int WinCustom[CUSTOMWINDOWNUM],WinCar,WinGod;
 
-
-
 	ViewType viewtype = bird;
 	DriveMode drivemode = ai;
 	CarType cartype = camera;
@@ -212,17 +210,14 @@ static void CarView ()	// set the place of the camera(the camera of the car, not
 	SetViewPoint (hpr,ViewPoint);
 }
 
-static void DrawRoute ()
-{
+static void DrawRoute () {
 	int Length = 5000;
 	sRouteID p,q;
 	static sRoute car,car_old;
-	Eigen::Vector3d posl(dBodyGetPosition (car_obj.GetWheelBL()->body));
-	Eigen::Vector3d posr(dBodyGetPosition (car_obj.GetWheelBR()->body));
 	if (VirtualSpeed>0.0) {
 		p = head;
 		head = (sRouteID)malloc(sizeof(sRoute));
-		head->pos = (posl+posr)/2.0;
+		head->pos = car_obj.GetPosition();
 		head->next = p;
 		if (p)
 			head->speed = (head->pos - p->pos).norm()/VirtualSpeed;
