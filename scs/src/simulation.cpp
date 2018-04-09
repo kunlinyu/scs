@@ -184,12 +184,8 @@ static void motor ()
 	//dJointSetHingeParam (Joint_BR,dParamVel,AngularSpeedR);
 }
 
-static void servo ()
-{
-	double curturn_L = dJointGetHinge2Angle1 (car_obj.GetJointFL());
-	double curturn_R = dJointGetHinge2Angle1 (car_obj.GetJointFR());
-	dJointSetHinge2Param (car_obj.GetJointFL(),dParamVel,(ServoDir/100.0*M_PI/4.0-curturn_L)*10.0+0);
-	dJointSetHinge2Param (car_obj.GetJointFR(),dParamVel,(ServoDir/100.0*M_PI/4.0-curturn_R)*10.0+0);
+static void servo () {
+  car_obj.SetServo(ServoDir);
 }
 
 void step (double stepsize)

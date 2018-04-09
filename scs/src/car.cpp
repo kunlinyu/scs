@@ -464,3 +464,15 @@ void Car::SetTorque(double l, double r) {
 	dJointAddHingeTorque(Joint_BL, l);
 	dJointAddHingeTorque(Joint_BR, r);
 }
+
+void Car::SetServo(double dir) {
+	double curturn_L = dJointGetHinge2Angle1(Joint_FL);
+	double curturn_R = dJointGetHinge2Angle1(Joint_FR);
+	dJointSetHinge2Param (Joint_FL, dParamVel, (dir / 400 * M_PI-curturn_L) * 10);
+	dJointSetHinge2Param (Joint_FR, dParamVel, (dir / 400 * M_PI-curturn_R) * 10);
+}
+
+
+
+
+

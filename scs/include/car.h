@@ -47,6 +47,7 @@ class Car {
   double GetSpeedR();
   double GetSpeed();
   void SetTorque(double l, double r);
+  void SetServo(double dir);
 
   Eigen::Vector3d GetPosition() { return Eigen::Vector3d(dBodyGetPosition(Chassis->body)); }
   Eigen::Vector3d GetAngularVel() { return Eigen::Vector3d(dBodyGetAngularVel(Chassis->body)); }
