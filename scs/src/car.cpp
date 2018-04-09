@@ -438,3 +438,24 @@ Eigen::Vector3d Car::ToWorldCoo (Eigen::Vector3d v)
 	Eigen::Vector3d v1 = v.x()*CarX() + v.y()*CarY() + v.z()*CarZ();
 	return v1;
 }
+
+double Car::GetASpeedL() {
+	Eigen::Vector3d vl(dBodyGetAngularVel(Wheel_BL->body));
+	Eigen::Vector3d pl(dBodyGetPosition  (Wheel_BL->body));
+	Eigen::Vector3d pr(dBodyGetPosition  (Wheel_BR->body));
+	Eigen::Vector3d v = pl - pr;
+	return vl.dot(v) / v.norm();
+}
+
+double Car::GetASpeedR() {
+	Eigen::Vector3d vr(dBodyGetAngularVel(Wheel_BR->body));
+	Eigen::Vector3d pl(dBodyGetPosition  (Wheel_BL->body));
+	Eigen::Vector3d pr(dBodyGetPosition  (Wheel_BR->body));
+	Eigen::Vector3d v = pl - pr;
+	return vr.dot(v) / v.norm();
+}
+
+double Car::GetASpeed() { return (GetASpeedL() + GetASpeedR()) / 2.0; }
+double Car::GetSpeedL() { return GetASpeedL() * WheelRadius; }
+double Car::GetSpeedR() { return GetASpeedR() * WheelRadius; }
+double Car::GetSpeed() { return GetASpeed() * WheelRadius; }

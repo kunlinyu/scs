@@ -33,11 +33,19 @@ class Car {
   void DrawBalanceCar();
   void SetCar(double speed, double turn);
   void SetBalanceCar(double speedL, double speedR);
+
   Eigen::Vector3d CarX();
   Eigen::Vector3d CarY();
   Eigen::Vector3d CarZ();
   Eigen::Vector3d ToCarCoo(Eigen::Vector3d v);
   Eigen::Vector3d ToWorldCoo(Eigen::Vector3d v);
+
+  double GetASpeedL();
+  double GetASpeedR();
+  double GetASpeed();
+  double GetSpeedL();
+  double GetSpeedR();
+  double GetSpeed();
 
   Eigen::Vector3d GetPosition() { return Eigen::Vector3d(dBodyGetPosition(Chassis->body)); }
   Eigen::Vector3d GetAngularVel() { return Eigen::Vector3d(dBodyGetAngularVel(Chassis->body)); }

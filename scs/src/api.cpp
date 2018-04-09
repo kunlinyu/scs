@@ -172,39 +172,15 @@ void sSetDisplayFunc (void f())
 	sSetDisplayFunc (f,0);
 }
 
-double sGetASpeedL ()
-{
-	Eigen::Vector3d vl(dBodyGetAngularVel (car_obj.GetWheelBL()->body));
-	Eigen::Vector3d pl(dBodyGetPosition   (car_obj.GetWheelBL()->body));
-	Eigen::Vector3d pr(dBodyGetPosition   (car_obj.GetWheelBR()->body));
-	Eigen::Vector3d v = pl - pr;
-	return vl.dot(v) / v.norm () ;
-}
+double sGetASpeedL() { return car_obj.GetASpeedL(); }
+double sGetASpeedR() { return car_obj.GetASpeedR(); }
+double sGetASpeed () { return car_obj.GetASpeed (); }
 
-double sGetASpeedR ()
-{
-	Eigen::Vector3d vr(dBodyGetAngularVel (car_obj.GetWheelBR()->body));
-	Eigen::Vector3d pl(dBodyGetPosition   (car_obj.GetWheelBL()->body));
-	Eigen::Vector3d pr(dBodyGetPosition   (car_obj.GetWheelBR()->body));
-	Eigen::Vector3d v = pl - pr;
-	return vr.dot(v) / v.norm () ;
-}
+double sGetSpeedL() { return car_obj.GetSpeedL(); } 
+double sGetSpeedR() { return car_obj.GetSpeedR(); }
+double sGetSpeed () { return car_obj.GetSpeed (); }
 
-double sGetASpeed ()
-{
-	return (sGetASpeedL () + sGetASpeedR ()) /2.0;
-}
-double sGetSpeedL ()
-{ return sGetASpeedL () * car_obj.GetWheelRadius(); }
-
-double sGetSpeedR ()
-{ return sGetASpeedR () * car_obj.GetWheelRadius(); }
-
-double sGetSpeed ()
-{ return sGetASpeed () * car_obj.GetWheelRadius();}
-
-void scsMainLoop (int * argc, char *argv[])
-{
+void scsMainLoop (int * argc, char *argv[]) {
 	printf(	"\n" VERSION " MainLoop\n");
 	
 	if (car_obj.GetCarReverseFlag())
