@@ -178,8 +178,7 @@ static void motor ()
 	double torquel = sign(Pl)*fabs(Pl/Aspeedl)+sign(Pl!=0.0?Pl:Aspeedl)-Aspeedl*0.0001-sign(Aspeedl)*0.01;
 	double torquer = sign(Pr)*fabs(Pr/Aspeedr)+sign(Pr!=0.0?Pr:Aspeedr)-Aspeedr*0.0001-sign(Aspeedr)*0.01;
 
-	dJointAddHingeTorque (car_obj.GetJointBL(),torquel);
-	dJointAddHingeTorque (car_obj.GetJointBR(),torquer);
+  car_obj.SetTorque(torquel, torquer);
 	
 	//dJointSetHingeParam (Joint_BL,dParamVel,AngularSpeedL);
 	//dJointSetHingeParam (Joint_BR,dParamVel,AngularSpeedR);

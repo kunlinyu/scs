@@ -31,8 +31,8 @@ class Car {
   void MakeBalanceCar(double x, double y, dWorldID world, dSpaceID space);
   void DrawCar();
   void DrawBalanceCar();
-  void SetCar(double speed, double turn);
-  void SetBalanceCar(double speedL, double speedR);
+  void SetCar(double speed, double turn);  // TODO: implement
+  void SetBalanceCar(double speedL, double speedR);  // TODO: implement
 
   Eigen::Vector3d CarX();
   Eigen::Vector3d CarY();
@@ -46,6 +46,7 @@ class Car {
   double GetSpeedL();
   double GetSpeedR();
   double GetSpeed();
+  void SetTorque(double l, double r);
 
   Eigen::Vector3d GetPosition() { return Eigen::Vector3d(dBodyGetPosition(Chassis->body)); }
   Eigen::Vector3d GetAngularVel() { return Eigen::Vector3d(dBodyGetAngularVel(Chassis->body)); }

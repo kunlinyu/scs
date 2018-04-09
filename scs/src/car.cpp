@@ -459,3 +459,8 @@ double Car::GetASpeed() { return (GetASpeedL() + GetASpeedR()) / 2.0; }
 double Car::GetSpeedL() { return GetASpeedL() * WheelRadius; }
 double Car::GetSpeedR() { return GetASpeedR() * WheelRadius; }
 double Car::GetSpeed() { return GetASpeed() * WheelRadius; }
+
+void Car::SetTorque(double l, double r) {
+	dJointAddHingeTorque(Joint_BL, l);
+	dJointAddHingeTorque(Joint_BR, r);
+}
