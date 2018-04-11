@@ -104,23 +104,22 @@ void AI_Balance ()
 
 int main(int argc, char *argv[])
 {
-	
 	switch (0) {
 		default:
 		case 0:
-			sSetCar (camera);
-			sSetAiFunc (AI_Camera);
-			sEnableCustomWindow ();
-			sSetDisplayFunc (Display);
+			sSetCar(camera);
+			sSetAiFunc(AI_Camera);
+			sEnableCustomWindow();
+			sSetDisplayFunc(Display);
 			break;
 		case 1:
-			sSetCar (balance);
-			sSetAiFunc (AI_Balance);
-			sSetDepressionAngle (45.0);
+			sSetCar(balance);
+			sSetAiFunc(AI_Balance);
+			sSetDepressionAngle(45.0);
 			break;
 		case 2:
-			sSetCar (electromagnetic);
-			sSetAiFunc (AI_Electromagnetic);
+			sSetCar(electromagnetic);
+			sSetAiFunc(AI_Electromagnetic);
 			break;
 	}
 	sSetTrack ("track/north.trk");

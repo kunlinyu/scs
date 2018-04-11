@@ -34,7 +34,7 @@
 
 
 enum CarType {
-	camera,electromagnetic,balance,
+	camera,electromagnetic,balance,  // TODO: move into car
 };
 
 

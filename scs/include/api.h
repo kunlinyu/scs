@@ -35,8 +35,8 @@ void sEnableMiddleLine ();	// Set Middle Line
 /*	Physics Func	*/
 void sSetCamera (Eigen::Vector3d pos);	// Set the position of camera
 void sSetCCD (Eigen::Vector3d pos);
-void sSetDepressionAngle (double depressionangle);// Set the depression angle of camera
-void sSetBatteryPosition (Eigen::Vector3d pos);// Set position of battery
+void sSetDepressionAngle (double depressionangle);  // Set the depression angle of camera
+void sSetBatteryPosition(Eigen::Vector3d pos);  // Set position of battery
 
 /*	Motor Func	*/
 void sSetMotor (int voltage);	// Set average speed of motors

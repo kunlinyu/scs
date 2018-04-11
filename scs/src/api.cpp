@@ -123,10 +123,8 @@ void sSetServoDir (int dir)
 	}
 }
 
-void sEnableReverse ()
-{
-	if (car_obj.GetCarReverseFlag())	car_obj.SetCarReverseFlag(0);
-	else			car_obj.SetCarReverseFlag(1);
+void sEnableReverse() {
+	car_obj.SetCarDirection(!car_obj.GetCarDirection());
 	printf("INIT: Reverse enabled.\n");
 }
 
@@ -183,10 +181,6 @@ double sGetSpeed () { return car_obj.GetSpeed (); }
 void scsMainLoop (int * argc, char *argv[]) {
 	printf(	"\n" VERSION " MainLoop\n");
 	
-	if (car_obj.GetCarReverseFlag())
-		if (car_obj.GetCarDirection())	car_obj.SetCarDirection(false);
-		else				car_obj.SetCarDirection(true);
-	
 	dInitODE2 (0);
 	ResetSimulation ();
 
@@ -200,17 +194,20 @@ void scsMainLoop (int * argc, char *argv[]) {
 	dCloseODE ();
 }
 
-void sSetCar (CarType ct)
-{
+void sSetCar (CarType ct) {
 	if (ct!=camera && ct!=balance && ct!= electromagnetic) {
 		ct = camera;
 		printf("SETCAR: car type error.\n");
 	}
 	cartype = ct;
-	if (cartype == camera)	car_obj.SetCarDirection(true);
-	else					car_obj.SetCarDirection(false);
-	if (cartype == electromagnetic)
+	if (cartype == camera) {
+    car_obj.SetCarDirection(true);
+  } else {
+    car_obj.SetCarDirection(false);
+  }
+	if (cartype == electromagnetic) {
 		MiddleLineFlag = 1;
+  }
 	printf("INIT: Car type have been set to be ");
 	switch (cartype) {
 		case camera: printf("camera.\n"); break;
@@ -278,9 +275,8 @@ void sSetDepressionAngle (double depressionangle)
 	printf("DEPRESSION: %6.3lf\n",DepressionAngle);
 }
 
-void sSetBatteryPosition (Eigen::Vector3d pos)
-{
-  car_obj.SetBatteryPos(pos);
+void sSetBatteryPosition(Eigen::Vector3d pos) {
+  car_obj.SetBattery(pos);
 	printf("BATTERY: new position ");
 //	pos.print ();  // TODO
 }

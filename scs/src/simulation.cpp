@@ -180,8 +180,8 @@ static void motor ()
 
   car_obj.SetTorque(torquel, torquer);
 	
-	//dJointSetHingeParam (Joint_BL,dParamVel,AngularSpeedL);
-	//dJointSetHingeParam (Joint_BR,dParamVel,AngularSpeedR);
+	//dJointSetHingeParam (joint_bl_,dParamVel,AngularSpeedL);
+	//dJointSetHingeParam (joint_br_,dParamVel,AngularSpeedR);
 }
 
 static void servo () {
