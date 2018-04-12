@@ -31,6 +31,7 @@
 	double CurrentStepTime = 0.0;
 
   Car car_obj;
+  Track track;
 
 void ResetSimulation ()
 {
@@ -64,7 +65,7 @@ void ResetSimulation ()
 	}
 	printf("SIM: Car created!\n");
 	
-	MakeTrack (space,TrackName);
+	track.MakeTrack (space,TrackName);
 	printf("SIM: Track created!\n");
 	printf("SIM: Virtual world created!\n");
 
@@ -72,9 +73,9 @@ void ResetSimulation ()
 	ClearRoute ();
 }
 
-void DestroySimulation ()
-{
-	DestroyTrack ();
+void DestroySimulation() {
+  // TODO: destroy car ?
+	track.DestroyTrack ();
 	dJointGroupDestroy (contactgroup);
 	dSpaceDestroy (space);
 	dWorldDestroy (world);
@@ -120,25 +121,25 @@ static void timer (double time)
 	static Eigen::Vector3d last(0,0,-1);
 	static int Round = 0;
 	Eigen::Vector3d pos = car_obj.GetPosition();
-	Eigen::Vector3d v1 = ELineL - pos;
-	Eigen::Vector3d v2 = ELineR - pos;
+	Eigen::Vector3d v1 = track.ELineL - pos;
+	Eigen::Vector3d v2 = track.ELineR - pos;
 
 	Time += time;		// at the different side of end line;
 	if (v1.cross(v2).z() * last.z() > 0) return;
 	last = v1.cross(v2);
 	
-	v1 = ELineR - ELineL;	// on track
-	v2 = pos - ELineL;
+	v1 = track.ELineR - track.ELineL;	// on track
+	v2 = pos - track.ELineL;
 	if (v1.dot(v2) < 0) return;
 
 	v1 *= -1;		// on track
-	v2 = pos - ELineR;
+	v2 = pos - track.ELineR;
 	if (v1.dot(v2) < 0) return;
 
 	if (first) {
 		first = 0;
-		AverageSpeed = EndLineDistance/Time;
-	} else	AverageSpeed = TotalLength/Time;
+		AverageSpeed = track.EndLineDistance / Time;
+	} else	AverageSpeed = track.TotalLength / Time;
 
 	if (AverageSpeed>10.0) {
 		printf("Abandoned result\n");
@@ -146,7 +147,7 @@ static void timer (double time)
 	}
 	else	printf("Round: %d\tTime: %5.2f\tAveSpeed: %5.2f\t",Round,Time,AverageSpeed);
 	
-	if (TotalLength/Time < 1.0)	printf("loser...\n");
+	if (track.TotalLength/Time < 1.0)	printf("loser...\n");
 	else if (AverageSpeed < 2.0)	printf("Hurry up!\n");
 	else if (AverageSpeed < 3.0)	printf("Good!\n");
 	else if (AverageSpeed < 4.0)	printf("Awesome!\n");
