@@ -130,11 +130,7 @@ void sEnableReverse() {
 
 void sEnableMiddleLine ()
 {
-  if (track.MiddleLineFlag) {
-    track.MiddleLineFlag = 0;
-  } else {
-    track.MiddleLineFlag = 1;
-  }
+  track.SetMiddleLine(true);
   printf("INIT: Middle line enabled.\n");
 }
 
@@ -209,7 +205,7 @@ void sSetCar (CarType ct) {
     car_obj.SetCarDirection(false);
   }
   if (cartype == electromagnetic) {
-    track.MiddleLineFlag = 1;
+    track.SetMiddleLine(true);
   }
   printf("INIT: Car type have been set to be ");
   switch (cartype) {
@@ -246,14 +242,14 @@ void sEnableRoute ()
 void sEnablePath (double security)
 {
   PathFlag = 0;
-  track.PathSecurity = security;
-  printf("INIT: Path disabled. (security == %lf)\n", track.PathSecurity);
+  track.SetPathSecurity(security);
+  printf("INIT: Path disabled. (security == %lf)\n", track.PathSecurity());
 }
 
 void sEnablePath ()
 {
   PathFlag = 0;
-  printf("INIT: Path disabled. (security == %lf)\n", track.PathSecurity);
+  printf("INIT: Path disabled. (security == %lf)\n", track.PathSecurity());
 }
 
 void sSetCamera (Eigen::Vector3d camerapos)
@@ -338,16 +334,16 @@ Eigen::Vector3d sGetMagnetic (Eigen::Vector3d pos)
 int sGetReedSwitch ()
 {
   Eigen::Vector3d pos(car_obj.GetPosition());
-  Eigen::Vector3d v1 = track.ELineR - track.ELineL;  // on track
-  Eigen::Vector3d v2 = pos - track.ELineL;
+  Eigen::Vector3d v1 = track.ELineR() - track.ELineL();  // on track
+  Eigen::Vector3d v2 = pos - track.ELineL();
   if (v1.dot(v2) < 0) return 0;
 
   v1 *= -1;  // on track
-  v2 = pos - track.ELineR;
+  v2 = pos - track.ELineR();
   if (v1.dot(v2) < 0) return 0;
 
   // in oval
-  if (((pos-track.ELineL).norm()+(pos-track.ELineR).norm())>sqrt(TRACK_WIDTH_OUT*TRACK_WIDTH_OUT+5.0*5.0*CONTROLTIME*CONTROLTIME))
+  if (((pos-track.ELineL()).norm()+(pos-track.ELineR()).norm())>sqrt(TRACK_WIDTH_OUT*TRACK_WIDTH_OUT+5.0*5.0*CONTROLTIME*CONTROLTIME))
     return 0;
   return 1;
 }

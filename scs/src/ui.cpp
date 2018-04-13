@@ -112,8 +112,11 @@ void Key (unsigned char cmd, int x, int y)
                 printf ("DEBUG: debug mode disabled.\n");
               }
               break;
-    case 'T': if (track.TrackReverseFlag) track.TrackReverseFlag = 0;
-                else   track.TrackReverseFlag = 1;
+    case 'T': if (track.TrackReverseFlag()) {
+                track.SetTrackReverseFlag(false);
+              } else {
+                track.SetTrackReverseFlag(true);
+              }
     case 'R': ResetSimulation(); break;
     case 'C': if (RouteFlag) {
                 ClearRoute ();

@@ -16,6 +16,7 @@
 #define TYPE_DASH    0x02
 #define TYPE_SLOP    0x04
 
+using Eigen::Vector3d;
 
 Track::Track() {
   for (int i = 0; i < MAXSEGMENT; i++) {
@@ -23,10 +24,10 @@ Track::Track() {
   }
   TriNum = 0;
   PointNum = 0;
-  TotalLength = 0.0;
-  PathSecurity = 0.0;
-  MiddleLineFlag = 0;
-  TrackReverseFlag = 0;
+  total_length_ = 0.0;
+  path_security_ = 0.0;
+  middle_line_flag_ = false;
+  track_reverse_flag_ = false;
   ElevationAngle = ELEVATION_ANGLE;
 }
 
@@ -50,10 +51,10 @@ void Track::ReadTrack (const char * fname) {
 
   printf ("\tTRACK: Reading track file \"%s\".\n",fname);
   fgets (line,255,fin);
-  sscanf(line,"%lf%c",&EndLineDistance,&c);
+  sscanf(line,"%lf%c", &end_line_distance_, &c);
 
-  EndLineDistance /= 100.0;
-  printf("\tTRACK: EndLineDistance: %5.2f.\n",EndLineDistance);
+  end_line_distance_ /= 100.0;
+  printf("\tTRACK: end_line_distance_: %5.2f.\n", end_line_distance_);
   int i = 0;
   do {
     if (fgets (line,255,fin)==NULL) {i++; break;}
@@ -68,9 +69,9 @@ void Track::ReadTrack (const char * fname) {
     else {
       for (int j=0; j<(int)strlen(s); j++) {
         switch (s[j]) {
-          case '+': type[i] |= TYPE_BARRIER;	break;
-          case '.': type[i] |= TYPE_DASH;	break;
-          case '^': type[i] |= TYPE_SLOP;	break;
+          case '+': type[i] |= TYPE_BARRIER;  break;
+          case '.': type[i] |= TYPE_DASH;  break;
+          case '^': type[i] |= TYPE_SLOP;  break;
           default : printf("TRACK: Unrecognized track type \"%c\".\n",s[j]);
         }
       }
@@ -95,41 +96,41 @@ void Track::Reverse() {
     type[i] = type[Segment-i-1];
     type[Segment-i-1] = c;
   }
-  EndLineDistance *= -1.0;
+  end_line_distance_ *= -1.0;
 }
 
 void Track::CalcPoint_OUT() {
-  Eigen::Vector3d dir(0,1,0);	// current direction
-  TotalLength = 0.0;
-  if (TrackReverseFlag) {
-    LftOut[0] = Eigen::Vector3d(-TRACK_WIDTH_OUT/2.0,2.0,TRACK_HEIGHT);
-    RgtOut[0] = Eigen::Vector3d( TRACK_WIDTH_OUT/2.0,2.0,TRACK_HEIGHT);
+  Vector3d dir(0,1,0);  // current direction
+  total_length_ = 0.0;
+  if (track_reverse_flag_) {
+    LftOut[0] = Vector3d(-TRACK_WIDTH_OUT/2.0,2.0,TRACK_HEIGHT);
+    RgtOut[0] = Vector3d( TRACK_WIDTH_OUT/2.0,2.0,TRACK_HEIGHT);
   }
   else {
-    LftOut[0] = Eigen::Vector3d (-TRACK_WIDTH_OUT/2.0,0.0,TRACK_HEIGHT);
-    RgtOut[0] = Eigen::Vector3d ( TRACK_WIDTH_OUT/2.0,0.0,TRACK_HEIGHT);
+    LftOut[0] = Vector3d (-TRACK_WIDTH_OUT/2.0,0.0,TRACK_HEIGHT);
+    RgtOut[0] = Vector3d ( TRACK_WIDTH_OUT/2.0,0.0,TRACK_HEIGHT);
   }
   DashLO[0] = LftOut[0];
   DashRO[0] = RgtOut[0];
 
   double SlopDir = 1.0;
-  int p = 1;	// pointer
-  int dp = 0;	// dash pointer
-  if (cartype == balance)	ElevationAngle = ELEVATION_ANGLE_B;
+  int p = 1;  // pointer
+  int dp = 0;  // dash pointer
+  if (cartype == balance)  ElevationAngle = ELEVATION_ANGLE_B;
 
-  for (int i=0; i<Segment; i++) {		// Calc for each segment
+  for (int i=0; i<Segment; i++) {    // Calc for each segment
     double length = track[i*2]/100.0;
     double degree = track[i*2];
     double R = track[i*2+1]/100.0;
-    if (fabs(R) < TRACK_WIDTH_OUT/2.0) {	// straight
-      if ((type[i]&TYPE_BARRIER) >0) {	// barrier
-        Eigen::Vector3d up(0,0,BARRIER_HEIGHT);
-        LftOut[p] = LftOut[p-1] + up + dir*BARRIER_HEIGHT;	// move up
+    if (fabs(R) < TRACK_WIDTH_OUT/2.0) {  // straight
+      if ((type[i]&TYPE_BARRIER) >0) {  // barrier
+        Vector3d up(0,0,BARRIER_HEIGHT);
+        LftOut[p] = LftOut[p-1] + up + dir*BARRIER_HEIGHT;  // move up
         RgtOut[p] = RgtOut[p-1] + up + dir*BARRIER_HEIGHT;
         p ++;
         length -= 2*BARRIER_HEIGHT;
         if (length<0.0) length = 0.0;
-        TotalLength += BARRIER_HEIGHT;
+        total_length_ += BARRIER_HEIGHT;
       }
       if ((type[i] & TYPE_SLOP) >0) {
         dir.z() = SlopDir * atan(ElevationAngle*DEG_TO_RAD/2.0);
@@ -138,14 +139,14 @@ void Track::CalcPoint_OUT() {
         p ++;
         length -= 2*TRANSITION_LENGTH;
         if (length<0.0) length = 0.0;
-        TotalLength += TRANSITION_LENGTH;
+        total_length_ += TRANSITION_LENGTH;
         dir.z() = SlopDir * atan(ElevationAngle*DEG_TO_RAD);
       } else {
         dir.z() = 0.0;
       }
-      LftOut[p] = LftOut[p-1] + length * dir;	// move forward
+      LftOut[p] = LftOut[p-1] + length * dir;  // move forward
       RgtOut[p] = RgtOut[p-1] + length * dir;
-      TotalLength += length;
+      total_length_ += length;
       if ((type[i]&TYPE_DASH)>0) {
         DashLO[dp] = LftOut[p];
         DashRO[dp] = RgtOut[p];
@@ -153,18 +154,18 @@ void Track::CalcPoint_OUT() {
       }
       p ++;
       if ((type[i]&TYPE_BARRIER) >0) {
-        Eigen::Vector3d down(0,0,-BARRIER_HEIGHT);
-        LftOut[p] = LftOut[p-1] + down + dir*BARRIER_HEIGHT;	// move up
+        Vector3d down(0,0,-BARRIER_HEIGHT);
+        LftOut[p] = LftOut[p-1] + down + dir*BARRIER_HEIGHT;  // move up
         RgtOut[p] = RgtOut[p-1] + down + dir*BARRIER_HEIGHT;
         p ++;
-        TotalLength += BARRIER_HEIGHT;
+        total_length_ += BARRIER_HEIGHT;
       }
       if ((type[i] & TYPE_SLOP) >0) {
         dir.z() = SlopDir * atan(ElevationAngle*DEG_TO_RAD/2.0);
         LftOut[p] = LftOut[p-1] + TRANSITION_LENGTH * dir;
         RgtOut[p] = RgtOut[p-1] + TRANSITION_LENGTH * dir;
         p ++;
-        TotalLength += TRANSITION_LENGTH;
+        total_length_ += TRANSITION_LENGTH;
         SlopDir *= -1.0;
       } else {
         dir.z() = 0.0;
@@ -180,29 +181,29 @@ void Track::CalcPoint_OUT() {
       double LenL = (fabs(R)-TRACK_WIDTH_OUT/2.0)*sin(StepDegree/2.0)*2.0;
       double LenR = (fabs(R)+TRACK_WIDTH_OUT/2.0)*sin(StepDegree/2.0)*2.0;
 
-      if ((type[i]&TYPE_BARRIER) >0) {	// barrier
-        Eigen::Vector3d up(0,0,BARRIER_HEIGHT);
-        LftOut[p] = LftOut[p-1] + up;	// move down
+      if ((type[i]&TYPE_BARRIER) >0) {  // barrier
+        Vector3d up(0,0,BARRIER_HEIGHT);
+        LftOut[p] = LftOut[p-1] + up;  // move down
         RgtOut[p] = RgtOut[p-1] + up;
         p ++;
       }
 
-      if (R < 0.0) {			// swap curve's direction
+      if (R < 0.0) {      // swap curve's direction
         double temp = LenL;
         LenL = LenR;
         LenR = temp;
         StepDegree = -StepDegree;
         R = -R;
       }
-      for (int j=0; j<StepNum; j++) {	// calc each step
-        Eigen::AngleAxis<double> rot(StepDegree / 2.0, Eigen::Vector3d::UnitZ());
+      for (int j=0; j<StepNum; j++) {  // calc each step
+        Eigen::AngleAxis<double> rot(StepDegree / 2.0, Vector3d::UnitZ());
         // turn the first half
         dir = rot * dir;
-        LftOut[p] = LftOut[p-1] + LenL * dir;	// move forward
+        LftOut[p] = LftOut[p-1] + LenL * dir;  // move forward
         RgtOut[p] = RgtOut[p-1] + LenR * dir;
         // turn the last half
         dir = rot * dir;
-        TotalLength += fabs(StepDegree*R);
+        total_length_ += fabs(StepDegree*R);
         if ((type[i]&TYPE_DASH)>0) {
           DashLO[dp] = LftOut[p];
           DashRO[dp] = RgtOut[p];
@@ -215,8 +216,8 @@ void Track::CalcPoint_OUT() {
         }
       }
       if ((type[i]&TYPE_BARRIER) >0) {
-        Eigen::Vector3d down(0,0,-BARRIER_HEIGHT);
-        LftOut[p] = LftOut[p-1] + down;	// move up
+        Vector3d down(0,0,-BARRIER_HEIGHT);
+        LftOut[p] = LftOut[p-1] + down;  // move up
         RgtOut[p] = RgtOut[p-1] + down;
         p ++;
         if (p>=MAXPOINT) {
@@ -228,15 +229,15 @@ void Track::CalcPoint_OUT() {
   }
 StopCalcPoint :
   // try to connect tobe a circle
-  if (	LftOut[p-1].x()<0 && RgtOut[p-1].x()>0 &&	// position limit
+  if (  LftOut[p-1].x()<0 && RgtOut[p-1].x()>0 &&  // position limit
       LftOut[p-1].y()<LftOut[0].y() && RgtOut[p-1].y()<RgtOut[0].y() &&
       (LftOut[p-1] - LftOut[0]).norm() < 0.3 &&
       (RgtOut[p-1] - RgtOut[0]).norm() < 0.3 &&  // distance limit
-      fabs(LftOut[p-1].x()-RgtOut[p-1].x())>0.9*TRACK_WIDTH_OUT)	// direction limit
+      fabs(LftOut[p-1].x()-RgtOut[p-1].x())>0.9*TRACK_WIDTH_OUT)  // direction limit
   {
     LftOut[p] = LftOut[0];
     RgtOut[p] = RgtOut[0];
-    TotalLength += (LftOut[p]-LftOut[p-1]+RgtOut[p]-RgtOut[p-1]).norm()/2.0;
+    total_length_ += (LftOut[p]-LftOut[p-1]+RgtOut[p]-RgtOut[p-1]).norm()/2.0;
     p ++;
     printf ("\tTRACK: Connect to be a circle automatically!\n");
   } else {
@@ -244,7 +245,7 @@ StopCalcPoint :
   }
   PointNum = p;
   DashNum = dp;
-  printf("\tTRACK: TotalLength of track: %5.2f.\n",TotalLength);
+  printf("\tTRACK: total_length_ of track: %5.2f.\n",total_length_);
   return ;
 }
 
@@ -265,32 +266,32 @@ void Track::InsertDash() {
 
 void Track::CalcDash_IN() {
   for (int i=0; i<DashNum; i++) {
-    Eigen::Vector3d v = DashRO[i] - DashLO[i];
+    Vector3d v = DashRO[i] - DashLO[i];
     v.normalize ();
     DashLI[i] = DashLO[i] + v * LINE_WIDTH*1.1;
     DashRI[i] = DashRO[i] - v * LINE_WIDTH*1.1;
   }
   for (int i=0; i<DashNum; i++) {
-    Eigen::Vector3d v = DashRO[i] - DashLO[i];
+    Vector3d v = DashRO[i] - DashLO[i];
     v.normalize ();
     DashLO[i] -= v * 0.001;
     DashRO[i] += v * 0.001;
   }
 }
 
-void Track::save(Eigen::Vector3d v1, Eigen::Vector3d v2, Eigen::Vector3d v3) {
+void Track::save(Vector3d v1, Vector3d v2, Vector3d v3) {
   static int first = 1;
   static int i = 0;
   static int r = 0;
-  if (r != TrackReverseFlag) {
-    r = TrackReverseFlag;
+  if (r != track_reverse_flag_) {
+    r = track_reverse_flag_;
     first = 1;
     free (vertices);
     i = 0;
   }
   if (first) {
     first = 0;
-    vertices = (double*)malloc(PointNum*6*3*3*sizeof(double));	// 6 points(2 triangle), 3 dimension, 3 surface
+    vertices = (double*)malloc(PointNum*6*3*3*sizeof(double));  // 6 points(2 triangle), 3 dimension, 3 surface
   }
   vertices[i++] = v1.x();
   vertices[i++] = v1.y();
@@ -321,16 +322,16 @@ void Track::CalcMesh() {
   }
 
   for (int i=0; i<PointNum-1; i++) {
-    Eigen::Vector3d L0 = Eigen::Vector3d(LftOut[i+0].x(), LftOut[i+0].y(), 0.0);
-    Eigen::Vector3d L1 = Eigen::Vector3d(LftOut[i+1].x(), LftOut[i+1].y(), 0.0);	// do not create profile if it is not very high
+    Vector3d L0 = Vector3d(LftOut[i+0].x(), LftOut[i+0].y(), 0.0);
+    Vector3d L1 = Vector3d(LftOut[i+1].x(), LftOut[i+1].y(), 0.0);  // do not create profile if it is not very high
     if (LftOut[i].z()>2*TRACK_HEIGHT+0.001 || LftOut[i+1].z()>2*TRACK_HEIGHT+0.001)
       save (LftOut[i],LftOut[i+1],L1);
     if (LftOut[i].z()>2*TRACK_HEIGHT+0.001)
       save (L1,L0,LftOut[i]);
   }
   for (int i=0; i<PointNum-1; i++) {
-    Eigen::Vector3d R0 = Eigen::Vector3d(RgtOut[i+0].x(), RgtOut[i+0].y(), 0.0);
-    Eigen::Vector3d R1 = Eigen::Vector3d(RgtOut[i+1].y(), RgtOut[i+1].y(), 0.0);
+    Vector3d R0 = Vector3d(RgtOut[i+0].x(), RgtOut[i+0].y(), 0.0);
+    Vector3d R1 = Vector3d(RgtOut[i+1].y(), RgtOut[i+1].y(), 0.0);
     if (RgtOut[i].z()>2*TRACK_HEIGHT+0.001)
       save (RgtOut[i],R0,R1);
     if (RgtOut[i].z()>2*TRACK_HEIGHT+0.001 || RgtOut[i+1].z()>2*TRACK_HEIGHT+0.001)
@@ -365,7 +366,7 @@ void Track::MakeMesh(dSpaceID space) {
 
 void Track::CalcPoint_IN() {
   for (int i=0; i<PointNum; i++) {
-    Eigen::Vector3d v = RgtOut[i] - LftOut[i];
+    Vector3d v = RgtOut[i] - LftOut[i];
     v.normalize ();
     LftIn[i] = LftOut[i] + v * LINE_WIDTH;
     RgtIn[i] = RgtOut[i] - v * LINE_WIDTH;
@@ -383,12 +384,12 @@ void Track::CalcSecure() {
     SecureL[j] = LftOut[i];
     SecureR[j] = RgtOut[i];
 
-    Eigen::Vector3d v1 = LftOut[i] - RgtOut[i];
-    Eigen::Vector3d v2 = LftOut[i+1] - RgtOut[i+1];
+    Vector3d v1 = LftOut[i] - RgtOut[i];
+    Vector3d v2 = LftOut[i+1] - RgtOut[i+1];
     if (v1!=v2) continue;
     double distance = (LftOut[i] - LftOut[i+1]).norm();
     int StepNum = (int)(distance/TRACK_STEP);
-    Eigen::Vector3d dir = LftOut[i+1] - LftOut[i];
+    Vector3d dir = LftOut[i+1] - LftOut[i];
     dir.normalize ();
     for (int k=0; k<StepNum; k++,j++) {
       SecureL[j+1] = SecureL[j] + dir * distance/(StepNum+1.0);
@@ -397,33 +398,33 @@ void Track::CalcSecure() {
   }
   PathNum = j;
 
-  if (PathSecurity > (TRACK_WIDTH_OUT-car_obj.GetCarWidth())/2.0) {
-    PathSecurity = (TRACK_WIDTH_OUT-car_obj.GetCarWidth())/2.0-0.001;
+  if (path_security_ > (TRACK_WIDTH_OUT-car_obj.GetCarWidth())/2.0) {
+    path_security_ = (TRACK_WIDTH_OUT-car_obj.GetCarWidth())/2.0-0.001;
     printf ("PATH: The security of path is too high.\n");
   }
-  if (PathSecurity < -car_obj.GetCarWidth()/2.0) {
-    PathSecurity = -car_obj.GetCarWidth()/2.0;
+  if (path_security_ < -car_obj.GetCarWidth()/2.0) {
+    path_security_ = -car_obj.GetCarWidth()/2.0;
     printf ("PATH: The security of path is too low.\n");
   }
   for (int i=0; i<PathNum; i++) {
-    Eigen::Vector3d v = SecureR[i] - SecureL[i];
+    Vector3d v = SecureR[i] - SecureL[i];
     v.normalize ();
-    SecureL[i] += v * (PathSecurity+car_obj.GetCarWidth()/2.0);
-    SecureR[i] -= v * (PathSecurity+car_obj.GetCarWidth()/2.0);
+    SecureL[i] += v * (path_security_+car_obj.GetCarWidth()/2.0);
+    SecureR[i] -= v * (path_security_+car_obj.GetCarWidth()/2.0);
   }
 }
 
 void Track::MakeTrack (dSpaceID space, const char * fname)
 {
-  static int first = 1;
-  static int r = 1;
+  static bool first = true;
+  static bool r = true;
   if (first) {
-    first = 0;
+    first = false;
     ReadTrack (fname);
     Reverse ();
   }
-  if (r!=TrackReverseFlag) {
-    r = TrackReverseFlag;
+  if (r != track_reverse_flag_) {
+    r = track_reverse_flag_;
     Reverse ();
     CalcPoint_OUT ();
     CalcMesh ();
@@ -433,8 +434,7 @@ void Track::MakeTrack (dSpaceID space, const char * fname)
     CalcDash_IN ();
     CalcSecure ();
     CalcPoint_Middle ();
-  }
-  else {
+  } else {
     MakeMesh (space);
   }
 }
@@ -445,20 +445,20 @@ void Track::DestroyTrack ()
 }
 
 void Track::DrawEndLine() {
-  double len = EndLineDistance;
+  double len = end_line_distance_;
   int WinID = glutGetWindow ();
-  while (len<0.0) len += TotalLength;
-  while (len>TotalLength) len -= TotalLength;
+  while (len<0.0) len += total_length_;
+  while (len>total_length_) len -= total_length_;
 
   for (int i=1; i<PointNum; i++) {
-    Eigen::Vector3d p = (LftOut[i-1]+RgtOut[i-1]) / 2.0;
-    Eigen::Vector3d n = (LftOut[i  ]+RgtOut[i  ]) / 2.0;
+    Vector3d p = (LftOut[i-1]+RgtOut[i-1]) / 2.0;
+    Vector3d n = (LftOut[i  ]+RgtOut[i  ]) / 2.0;
     len -= (n-p).norm();
     if (len<0.0) {
-      Eigen::AngleAxis<double> rot(M_PI_2, Eigen::Vector3d::UnitZ());
-      Eigen::Vector3d dir = (rot * (RgtOut[i] - LftOut[i])).normalized();
-      ELineL = LftOut[i] + dir*len;
-      ELineR = RgtOut[i] + dir*len;
+      Eigen::AngleAxis<double> rot(M_PI_2, Vector3d::UnitZ());
+      Vector3d dir = (rot * (RgtOut[i] - LftOut[i])).normalized();
+      end_line_l_ = LftOut[i] + dir*len;
+      end_line_r_ = RgtOut[i] + dir*len;
       break;
     }
   }
@@ -470,12 +470,12 @@ void Track::DrawEndLine() {
   } else {
     epsilon = 0.001;
   }
-  glTranslated(ELineL.x(),ELineL.y(),ELineL.z() + epsilon);
+  glTranslated(end_line_l_.x(),end_line_l_.y(),end_line_l_.z() + epsilon);
   epsilon = 0.001;
-  Eigen::Vector3d v = ELineR - ELineL;
+  Vector3d v = end_line_r_ - end_line_l_;
   double theta = atan(v.y()/v.x());
-  if (v.x()<0)	if (v.y()>0)	theta += M_PI;
-  else		theta -= M_PI;
+  if (v.x()<0)  if (v.y()>0)  theta += M_PI;
+  else    theta -= M_PI;
   glRotated (theta*RAD_TO_DEG,0,0,1);
   glRectd (TRACK_WIDTH_OUT/8.0,0,TRACK_WIDTH_OUT*3.0/8.0,LINE_WIDTH);
   glRectd (TRACK_WIDTH_OUT*5.0/8.0,0,TRACK_WIDTH_OUT*7.0/8.0,LINE_WIDTH);
@@ -498,7 +498,7 @@ void Track::DrawTrack() {
 
   glColor3f (0.6f,0.6f,0.6f);
   glBegin (GL_QUAD_STRIP);
-  for (int i=0; i<PointNum; i++) {				// left profile
+  for (int i=0; i<PointNum; i++) {        // left profile
     if (LftOut[i].z()<0.02) {
       glEnd();
       glBegin (GL_QUAD_STRIP);
@@ -511,7 +511,7 @@ void Track::DrawTrack() {
 
   glColor3f (0.6f,0.6f,0.6f);
   glBegin (GL_QUAD_STRIP);
-  for (int i=0; i<PointNum; i++) {				// right profile
+  for (int i=0; i<PointNum; i++) {        // right profile
     if (RgtOut[i].z()<0.02) {
       glEnd();
       glBegin (GL_QUAD_STRIP);
@@ -525,7 +525,7 @@ void Track::DrawTrack() {
   glColor3f (0.0f,0.0f,0.0f);
   glBegin (GL_QUAD_STRIP);
   epsilon = 0.001;
-  for (int i=0; i<PointNum; i++) {				// border
+  for (int i=0; i<PointNum; i++) {        // border
     glVertex3d (LftOut[i].x(),LftOut[i].y(),LftOut[i].z()-epsilon);
     glVertex3d (RgtOut[i].x(),RgtOut[i].y(),RgtOut[i].z()-epsilon);
   }
@@ -536,18 +536,18 @@ void Track::DrawTrack() {
   glColor3d (0.9,0.0,0.0);
   glBegin (GL_QUAD_STRIP);
   double len = 0.05;
-  for (int i=0; i<DashNum; i++) {					// dash left
+  for (int i=0; i<DashNum; i++) {          // dash left
     double dlen;
     if (i>0) dlen = (DashLI[i] - DashLI[i-1]).norm ();
-    else	dlen = 0.0;
+    else  dlen = 0.0;
     len += dlen;
     if (dlen>TRACK_STEP/5) {
       len = 0.05;
       glEnd ();
       glBegin (GL_QUAD_STRIP);
     }
-    if (((int)(len/0.1))%2)	glColor3d (0.66,0.66,0.66);
-    else			glColor3d (0.0,0.0,0.0);
+    if (((int)(len/0.1))%2)  glColor3d (0.66,0.66,0.66);
+    else      glColor3d (0.0,0.0,0.0);
     glVertex3d (DashLO[i].x(),DashLO[i].y(),DashLO[i].z() - epsilon);
     glVertex3d (DashLI[i].x(),DashLI[i].y(),DashLI[i].z());
   }
@@ -557,18 +557,18 @@ void Track::DrawTrack() {
   glColor3d (0.66,0.66,0.66);
   glBegin (GL_QUAD_STRIP);
   len = 0.05;
-  for (int i=0; i<DashNum; i++) {					// dash right
+  for (int i=0; i<DashNum; i++) {          // dash right
     double dlen;
     if (i>0) dlen = (DashRI[i] - DashRI[i-1]).norm ();
-    else	dlen = 0.0;
+    else  dlen = 0.0;
     len += dlen;
     if (dlen>TRACK_STEP/5) {
       len = 0.05;
       glEnd ();
       glBegin (GL_QUAD_STRIP);
     }
-    if (((int)(len/0.1))%2)	glColor3d (0.66,0.66,0.66);
-    else			glColor3d (0.0,0.0,0.0);
+    if (((int)(len/0.1))%2)  glColor3d (0.66,0.66,0.66);
+    else      glColor3d (0.0,0.0,0.0);
     glVertex3d (DashRO[i].x(),DashRO[i].y(),DashRO[i].z() - epsilon);
     glVertex3d (DashRI[i].x(),DashRI[i].y(),DashRI[i].z());
   }
@@ -582,7 +582,7 @@ void Track::DrawTrack() {
   } else {
     epsilon = 0.0;
   }
-  for (int i=0; i<PointNum; i++) {				// track surface (cover the black border)
+  for (int i=0; i<PointNum; i++) {        // track surface (cover the black border)
     if (fabs(LftIn[i].z() - TRACK_HEIGHT - BARRIER_HEIGHT)<0.001 && cartype == balance)
       glColor3f (0.0f,0.0f,0.0f);
     else
@@ -595,7 +595,7 @@ void Track::DrawTrack() {
 
   glColor3f (0.6f,0.6f,0.6f);
   glBegin (GL_QUAD_STRIP);
-  for (int i=0; i<PointNum; i++) {				// track button
+  for (int i=0; i<PointNum; i++) {        // track button
     glVertex3d (LftOut[i].x(),LftOut[i].y(),0.0);
     glVertex3d (RgtOut[i].x(),RgtOut[i].y(),0.0);
   }
@@ -603,5 +603,5 @@ void Track::DrawTrack() {
 
   DrawEndLine ();
 
-  if (WinID!=WinCar && viewtype!=car && MiddleLineFlag)	DrawMiddleLine();
+  if (WinID!=WinCar && viewtype!=car && middle_line_flag_)  DrawMiddleLine();
 }

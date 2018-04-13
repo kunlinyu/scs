@@ -112,8 +112,7 @@ static void CollideCallback (void *data, dGeomID o1, dGeomID o2)
 }
 
 // When the car cross the end line, calc time and round.
-static void timer (double time)
-{
+static void timer (double time) {
 	static int first = 1;
 	double AverageSpeed;
 	static double dir = -1.0;
@@ -121,33 +120,33 @@ static void timer (double time)
 	static Eigen::Vector3d last(0,0,-1);
 	static int Round = 0;
 	Eigen::Vector3d pos = car_obj.GetPosition();
-	Eigen::Vector3d v1 = track.ELineL - pos;
-	Eigen::Vector3d v2 = track.ELineR - pos;
+	Eigen::Vector3d v1 = track.ELineL() - pos;
+	Eigen::Vector3d v2 = track.ELineR() - pos;
 
 	Time += time;		// at the different side of end line;
 	if (v1.cross(v2).z() * last.z() > 0) return;
 	last = v1.cross(v2);
 	
-	v1 = track.ELineR - track.ELineL;	// on track
-	v2 = pos - track.ELineL;
+	v1 = track.ELineR() - track.ELineL();	// on track
+	v2 = pos - track.ELineL();
 	if (v1.dot(v2) < 0) return;
 
 	v1 *= -1;		// on track
-	v2 = pos - track.ELineR;
+	v2 = pos - track.ELineR();
 	if (v1.dot(v2) < 0) return;
 
 	if (first) {
 		first = 0;
-		AverageSpeed = track.EndLineDistance / Time;
-	} else	AverageSpeed = track.TotalLength / Time;
+		AverageSpeed = track.EndLineDistance() / Time;
+	} else	AverageSpeed = track.TotalLength() / Time;
 
-	if (AverageSpeed>10.0) {
+	if (AverageSpeed > 10.0) {
 		printf("Abandoned result\n");
 		Round --;
 	}
 	else	printf("Round: %d\tTime: %5.2f\tAveSpeed: %5.2f\t",Round,Time,AverageSpeed);
 	
-	if (track.TotalLength/Time < 1.0)	printf("loser...\n");
+	if (track.TotalLength() / Time < 1.0)	printf("loser...\n");
 	else if (AverageSpeed < 2.0)	printf("Hurry up!\n");
 	else if (AverageSpeed < 3.0)	printf("Good!\n");
 	else if (AverageSpeed < 4.0)	printf("Awesome!\n");

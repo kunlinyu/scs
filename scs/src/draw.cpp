@@ -116,7 +116,7 @@ static void GodView ()	// calc camera place to view car
 
   switch (viewtype) {
     case over:	// `~
-      hpr[0] = track.TrackReverseFlag * 180.0;
+      hpr[0] = track.TrackReverseFlag() ? 180.0 : 0.0;
       hpr[1] = 90.0;
       hpr[2] = 0.0;
       ViewPoint.x() = ViewPoint.x()*5.0/10.0 + pos.x()*5.0/10.0;
@@ -131,7 +131,7 @@ static void GodView ()	// calc camera place to view car
       SetViewPoint (hpr,ViewPoint);
       return ;
     case bird:	// 2
-      hpr[0] = track.TrackReverseFlag * 180.0;
+      hpr[0] = track.TrackReverseFlag() ? 180.0 : 0.0;
       hpr[1] = pitch;
       hpr[2] = 0.0;
       speed -= 0.5;
